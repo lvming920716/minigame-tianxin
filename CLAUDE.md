@@ -42,7 +42,7 @@ CHARACTER_SELECT → INPUT → HOME → GAME → RESULT
 | 三消触发 | `engine.js` ~617 | 甜心盘内3个同类食物 → 消除棋盘同类行 |
 | 连击 / 同类加速 | `engine.js` ~641 | 4秒内连消 ×3 分；连续3次同类 →权重掉落 ×1.5 |
 | 反弹 | `engine.js` ~528 | 关卡 ≥9 时概率增加体重 |
-| 甜心狂切触发 | `engine.js` ~704 | 连续4次同类三消 或 充能满100 |
+| 甜心狂切触发 | `engine.js` ~704 | 连续4次同类三消 |
 | 甜心狂切场景 | `main.js` ~389 | 独立实体生成与碰撞检测，滑动切中食物 |
 | 道具系统 | `engine.js` ~419 | shuffle / remove3 / revealTop / attractSame / addSlot |
 

@@ -20,10 +20,6 @@ const {
   SWEET_SLASH_BONUS_PER_HIT_MS,
   SWEET_SLASH_SCORE_BASE,
   SWEET_SLASH_SCORE_COMBO_STEP,
-  SWEET_SLASH_CHARGE_MAX,
-  SWEET_SLASH_CHARGE_PER_MATCH,
-  SWEET_SLASH_CHARGE_COMBO_BONUS,
-  SWEET_SLASH_CHARGE_SAME_TYPE_BONUS,
   REBOUND_MODAL_DURATION_MS,
   SPECIAL_EFFECT_DURATION_MS,
 } = require('./gameBalance');
@@ -148,8 +144,6 @@ function createInitialState() {
       lastHitAt: 0,
       timeLeftMs: 0,
     },
-    slashCharge: 0,
-    slashReady: false,
     lastMatchedType: null,
     sameTypeStreak: 0,
     slimBoostCooldown: 0,
@@ -376,8 +370,6 @@ function resetRunState(state, mode) {
   state.slash.combo = 0;
   state.slash.lastHitAt = 0;
   state.slash.timeLeftMs = 0;
-  state.slashCharge = 0;
-  state.slashReady = false;
   state.slashTriggersThisGame = 0;
   state.runFinished = false;
   state.success = false;
@@ -556,17 +548,6 @@ function tryTriggerRebound(state, action, effects) {
   return true;
 }
 
-function getSlashChargeGain(state) {
-  let gain = SWEET_SLASH_CHARGE_PER_MATCH;
-  if (state.combo >= 2) {
-    gain += SWEET_SLASH_CHARGE_COMBO_BONUS;
-  }
-  if (state.sameTypeStreak >= 2) {
-    gain += SWEET_SLASH_CHARGE_SAME_TYPE_BONUS;
-  }
-  return gain;
-}
-
 function canTriggerSweetSlash(state, slashTargets) {
   return (
     !state.slash.active &&
@@ -575,7 +556,7 @@ function canTriggerSweetSlash(state, slashTargets) {
   );
 }
 
-function startSweetSlash(state, effects, slashTargets, reason) {
+function startSweetSlash(state, effects, slashTargets) {
   if (!canTriggerSweetSlash(state, slashTargets)) {
     return false;
   }
@@ -587,23 +568,13 @@ function startSweetSlash(state, effects, slashTargets, reason) {
   state.slash.combo = 0;
   state.slash.lastHitAt = 0;
   state.slash.timeLeftMs = SWEET_SLASH_BASE_DURATION_MS;
-  state.slashCharge = 0;
-  state.slashReady = false;
   state.slashTriggersThisGame += 1;
   state.slashSameTypeStreak = 0;
   state.slashLastType = null;
 
   emitAudio(effects, GAME_AUDIO_EVENTS.sweetSlashStart);
-  if (reason === 'streak') {
-    emitToast(effects, '同味四连命中，甜心狂切爆发');
-    emitFlash(effects, '甜心狂切爆发', 'gold');
-  } else if (reason === 'ready') {
-    emitToast(effects, '狂切就绪命中，甜心狂切爆发');
-    emitFlash(effects, '狂切就绪爆发', 'pink');
-  } else {
-    emitToast(effects, '甜心狂切爆发');
-    emitFlash(effects, '狂切能量满格', 'pink');
-  }
+  emitToast(effects, '同味四连命中，甜心狂切爆发');
+  emitFlash(effects, '甜心狂切爆发', 'gold');
   effects.push({
     type: 'start_slash_arena',
     targets: slashTargets,
@@ -615,7 +586,6 @@ function startSweetSlash(state, effects, slashTargets, reason) {
 }
 
 function handleTripleMatch(state, action, effects, matchType, now) {
-  const wasSlashReady = !!state.slashReady;
   const matchedTiles = [];
   let removed = 0;
   const nextDock = [];
@@ -702,7 +672,6 @@ function handleTripleMatch(state, action, effects, matchType, now) {
     .map((tile) => ({ id: tile.id, type: tile.type }));
 
   if (
-    !wasSlashReady &&
     state.slashSameTypeStreak === SWEET_SLASH_MIN_CONSECUTIVE_SAME_TYPE - 1 &&
     canTriggerSweetSlash(state, slashTargets)
   ) {
@@ -710,22 +679,10 @@ function handleTripleMatch(state, action, effects, matchType, now) {
     emitFlash(effects, '四连可直开狂切', 'gold');
   }
 
-  state.slashCharge = Math.min(
-    SWEET_SLASH_CHARGE_MAX,
-    state.slashCharge + getSlashChargeGain(state)
-  );
-
   const triggeredRebound = tryTriggerRebound(state, action, effects);
 
   if (state.slashSameTypeStreak >= SWEET_SLASH_MIN_CONSECUTIVE_SAME_TYPE) {
-    startSweetSlash(state, effects, slashTargets, 'streak');
-  } else if (wasSlashReady) {
-    startSweetSlash(state, effects, slashTargets, 'ready');
-  } else if (state.slashCharge >= SWEET_SLASH_CHARGE_MAX) {
-    state.slashCharge = SWEET_SLASH_CHARGE_MAX;
-    state.slashReady = true;
-    emitToast(effects, '狂切已就绪，下一次三消即可爆发');
-    emitFlash(effects, '狂切就绪', 'pink');
+    startSweetSlash(state, effects, slashTargets);
   }
 
   return triggeredRebound;
@@ -743,8 +700,6 @@ function update(state, action) {
       lastHitAt: state.slash.lastHitAt,
       timeLeftMs: state.slash.timeLeftMs,
     },
-    slashCharge: state.slashCharge,
-    slashReady: state.slashReady,
     tiles: state.tiles.slice(),
     dock: state.dock.slice(),
   };

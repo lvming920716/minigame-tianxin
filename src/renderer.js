@@ -3,7 +3,7 @@
 const { FOODS, isBlocked } = require('../shared/tileMatchLogic');
 const { getCharacterById, CHARACTER_OPTIONS } = require('../shared/characters');
 const { getJourneyProfile, getRelativeStageMeta } = require('../shared/bodyStage');
-const { SWEET_SLASH_CHARGE_MAX } = require('../shared/gameBalance');
+const { SWEET_SLASH_MIN_CONSECUTIVE_SAME_TYPE } = require('../shared/gameBalance');
 const { toneColor } = require('./styleContract');
 
 function contains(rect, x, y) {
@@ -348,15 +348,15 @@ function drawAvatar(ctx, runtime, state, rect, options) {
 }
 
 function drawSlashChargeMeter(ctx, state, rect, style, now) {
-  const charge = clamp(state.slashCharge || 0, 0, SWEET_SLASH_CHARGE_MAX);
-  const ratio = charge / SWEET_SLASH_CHARGE_MAX;
-  const ready = !!state.slashReady;
-  const pulse = ready ? (0.5 + 0.5 * Math.sin(now / 150)) : (0.5 + 0.5 * Math.sin(now / 320));
-  const glowAlpha = ready ? 0.26 + pulse * 0.18 : 0.08 + ratio * 0.1;
+  const streak = clamp(state.slashSameTypeStreak || 0, 0, SWEET_SLASH_MIN_CONSECUTIVE_SAME_TYPE);
+  const ratio = streak / SWEET_SLASH_MIN_CONSECUTIVE_SAME_TYPE;
+  const almostReady = streak === SWEET_SLASH_MIN_CONSECUTIVE_SAME_TYPE - 1;
+  const pulse = almostReady ? (0.5 + 0.5 * Math.sin(now / 150)) : (0.5 + 0.5 * Math.sin(now / 320));
+  const glowAlpha = almostReady ? 0.2 + pulse * 0.12 : 0.08 + ratio * 0.1;
 
   ctx.save();
   ctx.shadowColor = `rgba(244,114,182,${glowAlpha.toFixed(3)})`;
-  ctx.shadowBlur = ready ? 24 : 14;
+  ctx.shadowBlur = almostReady ? 22 : 14;
   ctx.shadowOffsetY = 8;
   const shellFill = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h);
   shellFill.addColorStop(0, 'rgba(255,255,255,0.96)');
@@ -366,11 +366,23 @@ function drawSlashChargeMeter(ctx, state, rect, style, now) {
   ctx.fill();
   ctx.shadowColor = 'transparent';
   ctx.lineWidth = 1.2;
-  ctx.strokeStyle = ready ? 'rgba(244,114,182,0.58)' : 'rgba(255,255,255,0.92)';
+  ctx.strokeStyle = almostReady ? 'rgba(244,114,182,0.58)' : 'rgba(255,255,255,0.92)';
   ctx.stroke();
 
   drawFittedText(ctx, '狂切', rect.x + rect.w / 2, rect.y + 16, rect.w - 6, 11, 'bold', style.palette.accentStrong, 'center');
-  drawFittedText(ctx, '四连直达', rect.x + rect.w / 2, rect.y + 28, rect.w - 6, 9, 'bold', ready ? style.palette.danger : style.palette.textSecondary, 'center');
+  if (almostReady) {
+    drawFittedText(
+      ctx,
+      '再来一次同类三消',
+      rect.x + rect.w / 2,
+      rect.y + 28,
+      rect.w - 6,
+      9,
+      'bold',
+      style.palette.danger,
+      'center'
+    );
+  }
 
   const track = {
     x: rect.x + rect.w * 0.28,
@@ -389,7 +401,7 @@ function drawSlashChargeMeter(ctx, state, rect, style, now) {
     roundRect(ctx, track.x, track.y, track.w, track.h, 999);
     ctx.clip();
     const fill = ctx.createLinearGradient(track.x, fillY, track.x, track.y + track.h);
-    fill.addColorStop(0, ready ? '#fb7185' : '#f472b6');
+    fill.addColorStop(0, almostReady ? '#fb7185' : '#f472b6');
     fill.addColorStop(0.55, '#fb7185');
     fill.addColorStop(1, '#fbbf24');
     ctx.fillStyle = fill;
@@ -412,7 +424,7 @@ function drawSlashChargeMeter(ctx, state, rect, style, now) {
   roundRect(ctx, track.x, track.y, track.w, track.h, 999);
   ctx.stroke();
 
-  if (ready) {
+  if (almostReady) {
     ctx.save();
     ctx.globalAlpha = 0.68 + pulse * 0.22;
     drawOrb(ctx, rect.x + rect.w / 2, track.y + 6, rect.w * 0.9, 'rgba(251,113,133,0.42)');
@@ -421,13 +433,13 @@ function drawSlashChargeMeter(ctx, state, rect, style, now) {
 
   drawFittedText(
     ctx,
-    ready ? '就绪' : `${Math.round(ratio * 100)}%`,
+    `${streak}/${SWEET_SLASH_MIN_CONSECUTIVE_SAME_TYPE}`,
     rect.x + rect.w / 2,
     rect.y + rect.h - 14,
     rect.w - 8,
     10,
     'bold',
-    ready ? style.palette.danger : style.palette.textSecondary,
+    almostReady ? style.palette.danger : style.palette.textSecondary,
     'center'
   );
   ctx.restore();
@@ -834,14 +846,109 @@ function drawOrb(ctx, x, y, radius, color) {
 }
 
 const FOOD_SWATCHES = [
-  { top: '#ffe1ea', bottom: '#ffc8d9', edge: '#f47293', glow: 'rgba(244,114,182,0.28)' },
-  { top: '#ffe7d1', bottom: '#ffd0a7', edge: '#fb923c', glow: 'rgba(251,146,60,0.26)' },
-  { top: '#fff1bf', bottom: '#ffe08a', edge: '#f59e0b', glow: 'rgba(245,158,11,0.24)' },
-  { top: '#def7d8', bottom: '#bcebb0', edge: '#22c55e', glow: 'rgba(34,197,94,0.24)' },
-  { top: '#d9f8f4', bottom: '#aeece3', edge: '#14b8a6', glow: 'rgba(20,184,166,0.24)' },
-  { top: '#dfeeff', bottom: '#bddcff', edge: '#3b82f6', glow: 'rgba(59,130,246,0.24)' },
-  { top: '#ebe4ff', bottom: '#d4c4ff', edge: '#8b5cf6', glow: 'rgba(139,92,246,0.24)' },
-  { top: '#ffe1f6', bottom: '#ffc4ea', edge: '#ec4899', glow: 'rgba(236,72,153,0.26)' },
+  {
+    shell: '#ff5f83',
+    mid: '#dd2f62',
+    deep: '#a61345',
+    edge: '#ffd4de',
+    glow: 'rgba(244,114,182,0.38)',
+    prism: 'rgba(255,255,255,0.18)',
+    flare: 'rgba(214,255,145,0.24)',
+    plate: '#fff8fa',
+    plateEdge: '#ffd2dc',
+  },
+  {
+    shell: '#e2b14a',
+    mid: '#b77a19',
+    deep: '#85460b',
+    edge: '#fff0c0',
+    glow: 'rgba(245,158,11,0.34)',
+    prism: 'rgba(255,247,200,0.18)',
+    flare: 'rgba(255,239,132,0.24)',
+    plate: '#fff9ef',
+    plateEdge: '#f6dfae',
+  },
+  {
+    shell: '#ffb63c',
+    mid: '#f1840d',
+    deep: '#c65310',
+    edge: '#ffeab7',
+    glow: 'rgba(251,146,60,0.34)',
+    prism: 'rgba(255,246,196,0.18)',
+    flare: 'rgba(255,231,115,0.24)',
+    plate: '#fff9f0',
+    plateEdge: '#ffe0af',
+  },
+  {
+    shell: '#7fd98a',
+    mid: '#35a855',
+    deep: '#176833',
+    edge: '#dff8df',
+    glow: 'rgba(34,197,94,0.32)',
+    prism: 'rgba(233,255,240,0.16)',
+    flare: 'rgba(255,247,184,0.18)',
+    plate: '#f7fff8',
+    plateEdge: '#cdeed2',
+  },
+  {
+    shell: '#5dd9cc',
+    mid: '#1aa39e',
+    deep: '#0b6770',
+    edge: '#d6fbfb',
+    glow: 'rgba(20,184,166,0.32)',
+    prism: 'rgba(233,255,255,0.16)',
+    flare: 'rgba(191,248,255,0.22)',
+    plate: '#f4ffff',
+    plateEdge: '#c9f2f2',
+  },
+  {
+    shell: '#57b6ff',
+    mid: '#2e71ea',
+    deep: '#183fb0',
+    edge: '#d7edff',
+    glow: 'rgba(59,130,246,0.34)',
+    prism: 'rgba(232,245,255,0.18)',
+    flare: 'rgba(142,255,255,0.18)',
+    plate: '#f5fbff',
+    plateEdge: '#d2e8ff',
+  },
+  {
+    shell: '#9251ef',
+    mid: '#5b24cb',
+    deep: '#3a139d',
+    edge: '#eadbff',
+    glow: 'rgba(139,92,246,0.36)',
+    prism: 'rgba(243,235,255,0.18)',
+    flare: 'rgba(148,220,255,0.2)',
+    plate: '#faf7ff',
+    plateEdge: '#ddd3ff',
+  },
+  {
+    shell: '#e74f86',
+    mid: '#b71f57',
+    deep: '#860f3d',
+    edge: '#ffd7e3',
+    glow: 'rgba(236,72,153,0.36)',
+    prism: 'rgba(255,233,244,0.18)',
+    flare: 'rgba(255,221,128,0.2)',
+    plate: '#fff7fa',
+    plateEdge: '#ffd4df',
+  },
+];
+
+const FOOD_TILE_BUBBLES = [
+  { x: 0.2, y: 0.32, r: 0.034, a: 0.95 },
+  { x: 0.28, y: 0.22, r: 0.024, a: 0.82 },
+  { x: 0.42, y: 0.18, r: 0.02, a: 0.7 },
+  { x: 0.66, y: 0.22, r: 0.03, a: 0.84 },
+  { x: 0.8, y: 0.34, r: 0.026, a: 0.72 },
+  { x: 0.82, y: 0.56, r: 0.032, a: 0.86 },
+  { x: 0.7, y: 0.74, r: 0.022, a: 0.76 },
+  { x: 0.5, y: 0.82, r: 0.02, a: 0.64 },
+  { x: 0.28, y: 0.76, r: 0.028, a: 0.8 },
+  { x: 0.18, y: 0.6, r: 0.024, a: 0.72 },
+  { x: 0.18, y: 0.46, r: 0.016, a: 0.62 },
+  { x: 0.56, y: 0.14, r: 0.014, a: 0.66 },
 ];
 
 function getFoodSwatch(type) {
@@ -849,26 +956,236 @@ function getFoodSwatch(type) {
   return FOOD_SWATCHES[index];
 }
 
-function fillFoodTileSurface(ctx, rect, swatch, blocked) {
-  const fill = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h);
-  if (blocked) {
-    fill.addColorStop(0, 'rgba(226,232,240,0.96)');
-    fill.addColorStop(1, 'rgba(186,199,214,0.98)');
-  } else {
-    fill.addColorStop(0, swatch.top);
-    fill.addColorStop(1, swatch.bottom);
-  }
-  ctx.fillStyle = fill;
-  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, 12);
+function getFoodTileRadius(rect) {
+  return Math.min(rect.w, rect.h) * 0.2;
+}
+
+function drawFoodTileBubbles(ctx, rect, blocked) {
+  if (blocked) return;
+  const minSide = Math.min(rect.w, rect.h);
+  FOOD_TILE_BUBBLES.forEach((bubble) => {
+    const x = rect.x + rect.w * bubble.x;
+    const y = rect.y + rect.h * bubble.y;
+    const r = Math.max(1.2, minSide * bubble.r);
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255,255,255,${bubble.a})`;
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255,255,255,${Math.max(0.18, bubble.a * 0.46)})`;
+    ctx.arc(x - r * 0.32, y - r * 0.34, r * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawFoodTileMedallion(ctx, rect, swatch, blocked) {
+  const minSide = Math.min(rect.w, rect.h);
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  const outerR = minSide * 0.275;
+  const innerR = outerR * 0.68;
+  const plate = blocked ? '#ffffff' : swatch.plate;
+  const plateEdge = blocked ? 'rgba(226,232,240,0.98)' : swatch.plateEdge;
+
+  ctx.save();
+  ctx.shadowColor = blocked ? 'rgba(148,163,184,0.18)' : 'rgba(255,255,255,0.56)';
+  ctx.shadowBlur = minSide * 0.14;
+  ctx.shadowOffsetY = minSide * 0.04;
+  const outerFill = ctx.createRadialGradient(
+    cx - outerR * 0.26,
+    cy - outerR * 0.34,
+    outerR * 0.1,
+    cx,
+    cy,
+    outerR * 1.08
+  );
+  outerFill.addColorStop(0, '#ffffff');
+  outerFill.addColorStop(0.6, plate);
+  outerFill.addColorStop(1, plateEdge);
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+  ctx.fillStyle = outerFill;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = Math.max(1.2, minSide * 0.024);
+  ctx.strokeStyle = blocked ? 'rgba(226,232,240,0.98)' : 'rgba(255,255,255,0.98)';
+  ctx.stroke();
+
+  const innerFill = ctx.createRadialGradient(
+    cx - innerR * 0.18,
+    cy - innerR * 0.24,
+    innerR * 0.08,
+    cx,
+    cy,
+    innerR
+  );
+  innerFill.addColorStop(0, '#ffffff');
+  innerFill.addColorStop(1, blocked ? 'rgba(248,250,252,0.98)' : 'rgba(255,255,255,0.9)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+  ctx.fillStyle = innerFill;
   ctx.fill();
 
-  if (!blocked) {
-    const gloss = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h);
-    gloss.addColorStop(0, 'rgba(255,255,255,0.38)');
-    gloss.addColorStop(1, 'rgba(255,255,255,0)');
-    roundRect(ctx, rect.x + 1.5, rect.y + 1.5, rect.w - 3, rect.h * 0.48, 10);
-    ctx.fillStyle = gloss;
-    ctx.fill();
+  ctx.beginPath();
+  ctx.fillStyle = 'rgba(255,255,255,0.86)';
+  ctx.ellipse(cx - outerR * 0.26, cy - outerR * 0.34, outerR * 0.32, outerR * 0.15, -0.45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function fillFoodTileSurface(ctx, rect, swatch, blocked) {
+  const radius = getFoodTileRadius(rect);
+  const minSide = Math.min(rect.w, rect.h);
+  const inset = Math.max(4, minSide * 0.075);
+  const inner = {
+    x: rect.x + inset,
+    y: rect.y + inset,
+    w: rect.w - inset * 2,
+    h: rect.h - inset * 2,
+  };
+
+  ctx.save();
+  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  ctx.clip();
+
+  const fill = ctx.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y + rect.h);
+  if (blocked) {
+    fill.addColorStop(0, 'rgba(241,245,249,0.98)');
+    fill.addColorStop(0.58, 'rgba(203,213,225,0.98)');
+    fill.addColorStop(1, 'rgba(148,163,184,0.98)');
+  } else {
+    fill.addColorStop(0, swatch.shell);
+    fill.addColorStop(0.52, swatch.mid);
+    fill.addColorStop(1, swatch.deep);
+  }
+  ctx.fillStyle = fill;
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+  const bloom = ctx.createRadialGradient(
+    rect.x + rect.w * 0.32,
+    rect.y + rect.h * 0.28,
+    minSide * 0.08,
+    rect.x + rect.w * 0.5,
+    rect.y + rect.h * 0.5,
+    minSide * 0.8
+  );
+  bloom.addColorStop(0, blocked ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.32)');
+  bloom.addColorStop(0.55, blocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.12)');
+  bloom.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = bloom;
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+  const innerFill = ctx.createLinearGradient(inner.x, inner.y, inner.x, inner.y + inner.h);
+  if (blocked) {
+    innerFill.addColorStop(0, 'rgba(255,255,255,0.12)');
+    innerFill.addColorStop(1, 'rgba(148,163,184,0.16)');
+  } else {
+    innerFill.addColorStop(0, 'rgba(255,255,255,0.08)');
+    innerFill.addColorStop(0.45, swatch.prism);
+    innerFill.addColorStop(1, 'rgba(255,255,255,0.03)');
+  }
+  roundRect(ctx, inner.x, inner.y, inner.w, inner.h, Math.max(8, radius - inset * 0.35));
+  ctx.fillStyle = innerFill;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(rect.x + rect.w * 0.5, rect.y + inset * 0.35);
+  ctx.lineTo(rect.x + rect.w - inset * 0.3, rect.y + rect.h * 0.5);
+  ctx.lineTo(rect.x + rect.w * 0.5, rect.y + rect.h - inset * 0.35);
+  ctx.lineTo(rect.x + inset * 0.3, rect.y + rect.h * 0.5);
+  ctx.closePath();
+  ctx.fillStyle = blocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.16)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(rect.x, rect.y + rect.h * 0.42);
+  ctx.lineTo(rect.x + rect.w * 0.42, rect.y);
+  ctx.lineTo(rect.x + rect.w * 0.72, rect.y);
+  ctx.lineTo(rect.x + rect.w * 0.18, rect.y + rect.h * 0.54);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.34)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(rect.x + rect.w * 0.54, rect.y + rect.h);
+  ctx.lineTo(rect.x + rect.w, rect.y + rect.h * 0.54);
+  ctx.lineTo(rect.x + rect.w, rect.y + rect.h * 0.86);
+  ctx.lineTo(rect.x + rect.w * 0.72, rect.y + rect.h);
+  ctx.closePath();
+  ctx.fillStyle = blocked ? 'rgba(255,255,255,0.08)' : swatch.flare;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(rect.x + rect.w * 0.08, rect.y + rect.h * 0.18);
+  ctx.lineTo(rect.x + rect.w * 0.32, rect.y + rect.h * 0.06);
+  ctx.lineTo(rect.x + rect.w * 0.88, rect.y + rect.h * 0.62);
+  ctx.lineTo(rect.x + rect.w * 0.66, rect.y + rect.h * 0.76);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.16)';
+  ctx.fill();
+
+  roundRect(ctx, rect.x + 1.5, rect.y + 1.5, rect.w - 3, rect.h * 0.44, Math.max(8, radius - 2));
+  const gloss = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h * 0.48);
+  gloss.addColorStop(0, 'rgba(255,255,255,0.82)');
+  gloss.addColorStop(0.42, 'rgba(255,255,255,0.28)');
+  gloss.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gloss;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(rect.x + rect.w * 0.1, rect.y + rect.h * 0.12);
+  ctx.lineTo(rect.x + rect.w * 0.24, rect.y + rect.h * 0.06);
+  ctx.lineTo(rect.x + rect.w * 0.8, rect.y + rect.h * 0.62);
+  ctx.lineTo(rect.x + rect.w * 0.7, rect.y + rect.h * 0.68);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.26)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.ellipse(rect.x + rect.w * 0.18, rect.y + rect.h * 0.16, rect.w * 0.16, rect.h * 0.06, -0.55, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.lineWidth = Math.max(1.2, minSide * 0.03);
+  ctx.strokeStyle = blocked ? 'rgba(148,163,184,0.9)' : swatch.edge;
+  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  ctx.stroke();
+  ctx.lineWidth = Math.max(1, minSide * 0.018);
+  ctx.strokeStyle = blocked ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.5)';
+  roundRect(ctx, inner.x, inner.y, inner.w, inner.h, Math.max(8, radius - inset * 0.35));
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawFoodTileBlock(ctx, rect, type, emoji, blocked) {
+  const swatch = getFoodSwatch(type);
+  const minSide = Math.min(rect.w, rect.h);
+
+  ctx.save();
+  ctx.shadowColor = blocked ? 'rgba(100,116,139,0.14)' : swatch.glow;
+  ctx.shadowBlur = blocked ? minSide * 0.12 : minSide * 0.22;
+  ctx.shadowOffsetY = blocked ? minSide * 0.05 : minSide * 0.08;
+  fillFoodTileSurface(ctx, rect, swatch, blocked);
+  ctx.restore();
+
+  drawFoodTileBubbles(ctx, rect, blocked);
+  drawFoodTileMedallion(ctx, rect, swatch, blocked);
+  drawFoodEmoji(ctx, emoji, rect.x + rect.w / 2, rect.y + rect.h / 2, minSide * 0.5, blocked);
+
+  if (blocked) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = Math.max(1.2, minSide * 0.025);
+    ctx.beginPath();
+    ctx.moveTo(rect.x + rect.w * 0.22, rect.y + rect.h * 0.22);
+    ctx.lineTo(rect.x + rect.w * 0.78, rect.y + rect.h * 0.78);
+    ctx.moveTo(rect.x + rect.w * 0.78, rect.y + rect.h * 0.22);
+    ctx.lineTo(rect.x + rect.w * 0.22, rect.y + rect.h * 0.78);
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -877,8 +1194,14 @@ function drawFoodEmoji(ctx, emoji, x, y, size, blocked) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = `${Math.floor(size)}px sans-serif`;
-  ctx.shadowColor = blocked ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.58)';
-  ctx.shadowBlur = blocked ? 4 : 8;
+  if (!blocked) {
+    ctx.lineWidth = Math.max(1.5, size * 0.08);
+    ctx.strokeStyle = 'rgba(255,255,255,0.78)';
+    ctx.strokeText(emoji, x, y + 1);
+  }
+  ctx.shadowColor = blocked ? 'rgba(255,255,255,0.18)' : 'rgba(15,23,42,0.18)';
+  ctx.shadowBlur = blocked ? 3 : 10;
+  ctx.shadowOffsetY = blocked ? 0 : Math.max(1, size * 0.035);
   ctx.fillText(emoji, x, y + 1);
   ctx.restore();
 }
@@ -890,8 +1213,9 @@ function drawFoodDisc(ctx, x, y, r, emoji, type, style, alpha) {
   ctx.globalAlpha = opacity;
   const fill = ctx.createRadialGradient(x - r * 0.28, y - r * 0.34, r * 0.22, x, y, r * 1.18);
   fill.addColorStop(0, '#ffffff');
-  fill.addColorStop(0.58, swatch.top);
-  fill.addColorStop(1, swatch.bottom);
+  fill.addColorStop(0.42, swatch.shell);
+  fill.addColorStop(0.72, swatch.mid);
+  fill.addColorStop(1, swatch.deep);
   ctx.fillStyle = fill;
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -899,6 +1223,14 @@ function drawFoodDisc(ctx, x, y, r, emoji, type, style, alpha) {
   ctx.lineWidth = 2;
   ctx.strokeStyle = swatch.edge;
   ctx.stroke();
+  ctx.beginPath();
+  ctx.fillStyle = 'rgba(255,255,255,0.14)';
+  ctx.moveTo(x, y - r * 0.98);
+  ctx.lineTo(x + r * 0.98, y);
+  ctx.lineTo(x, y + r * 0.98);
+  ctx.lineTo(x - r * 0.98, y);
+  ctx.closePath();
+  ctx.fill();
   ctx.beginPath();
   ctx.fillStyle = 'rgba(255,255,255,0.82)';
   ctx.arc(x - r * 0.28, y - r * 0.3, r * 0.2, 0, Math.PI * 2);
@@ -1193,7 +1525,6 @@ function drawTileFlights(ctx, runtime, layout, now) {
     if (t >= 1) return;
 
     const source = tileToCanvas(flight.tile, g.boardRect, g.tileSize, g.tileInset);
-    const swatch = getFoodSwatch(flight.tile.type);
     const fromX = source.x + g.tileSize / 2;
     const fromY = source.y + g.tileSize / 2;
     const slotRect = getDockSlotRect(g.dockRect, runtime.state.maxDockSize, flight.dockIndex);
@@ -1208,16 +1539,13 @@ function drawTileFlights(ctx, runtime, layout, now) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
-    ctx.shadowColor = swatch.glow;
-    ctx.shadowBlur = 16;
-    ctx.shadowOffsetY = 6;
-    fillFoodTileSurface(ctx, { x: -g.tileSize / 2, y: -g.tileSize / 2, w: g.tileSize, h: g.tileSize }, swatch, false);
-    ctx.shadowColor = 'transparent';
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = swatch.edge;
-    roundRect(ctx, -g.tileSize / 2, -g.tileSize / 2, g.tileSize, g.tileSize, 12);
-    ctx.stroke();
-    drawFoodEmoji(ctx, FOODS[flight.tile.type] || '🍩', 0, 0, g.tileSize * 0.62, false);
+    drawFoodTileBlock(
+      ctx,
+      { x: -g.tileSize / 2, y: -g.tileSize / 2, w: g.tileSize, h: g.tileSize },
+      flight.tile.type,
+      FOODS[flight.tile.type] || '🍩',
+      false
+    );
     ctx.restore();
   });
 }
@@ -1338,28 +1666,136 @@ function drawConfirmPage(ctx, state, runtime, layout, style, hits) {
 function drawHomePage(ctx, state, runtime, layout, style, hits) {
   const header = getHeaderMetrics(layout);
   const journey = getJourneyContext(state);
+  const compact = layout.width <= 360 || layout.height <= 700;
   drawTitle(ctx, layout, style, '准备开局');
 
+  const startBtn = getBottomActionRect(layout, compact ? 50 : 54, compact ? 8 : 12);
+  startBtn.x += compact ? 8 : 6;
+  startBtn.w -= (compact ? 16 : 12);
+
+  const modeStartGap = compact ? 34 : 38;
+  const modeCardH = compact ? 114 : 120;
+  const modeCard = {
+    x: layout.sidePad + (compact ? 6 : 4),
+    y: startBtn.y - modeStartGap - modeCardH,
+    w: layout.width - (layout.sidePad + (compact ? 6 : 4)) * 2,
+    h: modeCardH,
+  };
+
+  const infoToModeGap = compact ? 14 : 16;
+  const infoCard = {
+    x: layout.sidePad + 6,
+    y: modeCard.y - infoToModeGap - (compact ? 88 : 94),
+    w: layout.width - (layout.sidePad + 6) * 2,
+    h: compact ? 88 : 94,
+  };
+
+  const heroTop = header.contentTop + (compact ? 2 : 8);
+  const heroBottom = infoCard.y - (compact ? 18 : 22);
+  const heroTextReserve = compact ? 62 : 70;
+  const avatarH = Math.max(
+    150,
+    Math.min(
+      compact ? 194 : 220,
+      heroBottom - heroTop - heroTextReserve
+    )
+  );
+  const avatarW = Math.min(avatarH * 0.78, compact ? 162 : 182);
   const avatarRect = {
-    x: layout.width / 2 - Math.min(108, layout.width * 0.26),
-    y: header.contentTop + 8,
-    w: Math.min(216, layout.width * 0.52),
-    h: Math.min(296, layout.height * 0.38),
+    x: layout.width / 2 - avatarW / 2,
+    y: heroTop,
+    w: avatarW,
+    h: avatarH,
   };
   drawAvatar(ctx, runtime, state, avatarRect, { mode: 'contain', padding: 0, alignY: 0.52 });
-  drawFittedText(ctx, getCharacterById(state.selectedCharacterId).name, layout.width / 2, avatarRect.y + avatarRect.h + 14, layout.width - layout.sidePad * 2, 18, 'bold', style.palette.textPrimary, 'center');
-  drawFittedText(ctx, getCharacterById(state.selectedCharacterId).tagline, layout.width / 2, avatarRect.y + avatarRect.h + 34, layout.width - layout.sidePad * 2, 13, 'normal', style.palette.accentStrong, 'center');
-  drawChip(ctx, { x: layout.width / 2 - 83, y: avatarRect.y + avatarRect.h + 44, w: 166, h: 22 }, `${journey.journeyProfile.label} · ${journey.stageMeta.label}`, style, 'rgba(255,247,250,0.98)');
+  const character = getCharacterById(state.selectedCharacterId);
+  drawFittedText(
+    ctx,
+    character.name,
+    layout.width / 2,
+    avatarRect.y + avatarRect.h + (compact ? 12 : 14),
+    layout.width - layout.sidePad * 2,
+    compact ? 17 : 18,
+    'bold',
+    style.palette.textPrimary,
+    'center'
+  );
+  drawFittedText(
+    ctx,
+    character.tagline,
+    layout.width / 2,
+    avatarRect.y + avatarRect.h + (compact ? 30 : 34),
+    layout.width - layout.sidePad * 2,
+    compact ? 12 : 13,
+    'normal',
+    style.palette.accentStrong,
+    'center'
+  );
+  const heroChipW = Math.min(layout.width - layout.sidePad * 2 - 30, compact ? 178 : 194);
+  drawChip(
+    ctx,
+    {
+      x: layout.width / 2 - heroChipW / 2,
+      y: avatarRect.y + avatarRect.h + (compact ? 40 : 46),
+      w: heroChipW,
+      h: 22,
+    },
+    `${journey.journeyProfile.label} · ${journey.stageMeta.label}`,
+    style,
+    'rgba(255,247,250,0.98)'
+  );
 
   const progress = journey.progress;
-  const infoCard = { x: layout.sidePad + 8, y: avatarRect.y + avatarRect.h + 74, w: layout.width - (layout.sidePad + 8) * 2, h: 68 };
   drawCard(ctx, infoCard, style, false);
-  drawFittedText(ctx, `${state.currentWeight.toFixed(1)} 斤`, infoCard.x + 18, infoCard.y + 22, 100, 22, '600', style.palette.textPrimary, 'left');
-  drawFittedText(ctx, `${state.targetWeight.toFixed(1)} 斤`, infoCard.x + infoCard.w - 18, infoCard.y + 22, 100, 18, '600', style.palette.accentStrong, 'right');
-  drawChip(ctx, { x: infoCard.x + 16, y: infoCard.y + 34, w: 46, h: 18 }, '当前', style, 'rgba(241,245,249,0.92)');
-  drawChip(ctx, { x: infoCard.x + infoCard.w - 62, y: infoCard.y + 34, w: 46, h: 18 }, '目标', style, style.palette.accentSoft);
+  const metricTop = infoCard.y + 18;
+  const leftX = infoCard.x + infoCard.w * 0.26;
+  const rightX = infoCard.x + infoCard.w * 0.74;
+  const metricW = infoCard.w * 0.34;
+  drawFittedText(ctx, '当前体重', leftX, metricTop, metricW, 11, 'bold', style.palette.textSecondary, 'center');
+  drawFittedText(
+    ctx,
+    `${state.currentWeight.toFixed(1)} 斤`,
+    leftX,
+    infoCard.y + 40,
+    metricW,
+    compact ? 18 : 20,
+    '600',
+    style.palette.textPrimary,
+    'center'
+  );
+  drawFittedText(ctx, '目标体重', rightX, metricTop, metricW, 11, 'bold', style.palette.accentStrong, 'center');
+  drawFittedText(
+    ctx,
+    `${state.targetWeight.toFixed(1)} 斤`,
+    rightX,
+    infoCard.y + 40,
+    metricW,
+    compact ? 18 : 20,
+    '600',
+    style.palette.accentStrong,
+    'center'
+  );
+  ctx.save();
+  ctx.strokeStyle = 'rgba(244,229,236,0.92)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(infoCard.x + infoCard.w / 2, infoCard.y + 16);
+  ctx.lineTo(infoCard.x + infoCard.w / 2, infoCard.y + 52);
+  ctx.stroke();
+  ctx.restore();
+  drawFittedText(
+    ctx,
+    `向目标推进 ${Math.round(progress)}%`,
+    infoCard.x + infoCard.w / 2,
+    infoCard.y + 60,
+    infoCard.w - 40,
+    11,
+    'bold',
+    style.palette.textSecondary,
+    'center'
+  );
 
-  const barRect = { x: infoCard.x + 14, y: infoCard.y + 48, w: infoCard.w - 28, h: 10 };
+  const barRect = { x: infoCard.x + 18, y: infoCard.y + infoCard.h - 18, w: infoCard.w - 36, h: 9 };
   ctx.save();
   roundRect(ctx, barRect.x, barRect.y, barRect.w, barRect.h, style.radius.pill);
   ctx.fillStyle = 'rgba(241,245,249,0.95)';
@@ -1369,17 +1805,23 @@ function drawHomePage(ctx, state, runtime, layout, style, hits) {
   ctx.fill();
   ctx.restore();
 
-  const modeY = infoCard.y + infoCard.h + 14;
-  const modeW = layout.width - layout.sidePad * 2;
-  const infiniteRect = { x: layout.sidePad, y: modeY, w: modeW, h: 48 };
-  const classicRect = { x: layout.sidePad, y: modeY + 56, w: modeW, h: 48 };
+  drawCard(ctx, modeCard, style, false);
+  drawSparkle(ctx, modeCard.x + 18, modeCard.y + 20, 6, 'rgba(255,190,210,0.78)', 0.9);
+  drawSparkle(ctx, modeCard.x + modeCard.w - 18, modeCard.y + 20, 6, 'rgba(255,220,140,0.72)', 0.88);
 
-  drawButton(ctx, infiniteRect, '无限模式', style, state.gameMode === 'INFINITE' ? 'primary' : 'secondary');
-  drawButton(ctx, classicRect, '经典模式（60秒）', style, state.gameMode === 'CLASSIC' ? 'primary' : 'secondary');
+  const modeInset = compact ? 14 : 16;
+  const modeW = modeCard.w - modeInset * 2;
+  const modeH = compact ? 42 : 44;
+  const modeGap = compact ? 12 : 14;
+  const modeY = modeCard.y + (compact ? 16 : 18);
+  const infiniteRect = { x: modeCard.x + modeInset, y: modeY, w: modeW, h: modeH };
+  const classicRect = { x: modeCard.x + modeInset, y: modeY + modeH + modeGap, w: modeW, h: modeH };
+
+  drawButton(ctx, infiniteRect, '∞ 无限模式', style, state.gameMode === 'INFINITE' ? 'primary' : 'secondary');
+  drawButton(ctx, classicRect, '◷ 经典模式', style, state.gameMode === 'CLASSIC' ? 'primary' : 'secondary');
   addHit(hits, 'set_mode', 'INFINITE', infiniteRect);
   addHit(hits, 'set_mode', 'CLASSIC', classicRect);
 
-  const startBtn = getBottomActionRect(layout, 54, 12);
   drawButton(ctx, startBtn, '开始游戏', style, 'primary');
   addHit(hits, 'start_game', 'start_game', startBtn);
 }
@@ -1553,39 +1995,10 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
   boardTiles.forEach((tile) => {
     const pos = tileToCanvas(tile, g.boardRect, g.tileSize, g.tileInset);
     const blocked = isBlocked(tile, state.tiles);
-    const swatch = getFoodSwatch(tile.type);
     const tileRect = { x: pos.x, y: pos.y, w: g.tileSize, h: g.tileSize };
 
     ctx.save();
-    ctx.shadowColor = blocked ? 'transparent' : swatch.glow;
-    ctx.shadowBlur = blocked ? 0 : 14;
-    ctx.shadowOffsetY = blocked ? 0 : 6;
-    fillFoodTileSurface(ctx, tileRect, swatch, blocked);
-    ctx.shadowColor = 'transparent';
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = blocked ? 'rgba(100,116,139,0.95)' : swatch.edge;
-    roundRect(ctx, tileRect.x, tileRect.y, tileRect.w, tileRect.h, 12);
-    ctx.stroke();
-
-    if (blocked) {
-      const blockedGlow = ctx.createLinearGradient(tileRect.x, tileRect.y, tileRect.x, tileRect.y + tileRect.h);
-      blockedGlow.addColorStop(0, 'rgba(148,163,184,0.28)');
-      blockedGlow.addColorStop(1, 'rgba(71,85,105,0.22)');
-      roundRect(ctx, tileRect.x + 1, tileRect.y + 1, tileRect.w - 2, tileRect.h - 2, 11);
-      ctx.fillStyle = blockedGlow;
-      ctx.fill();
-
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(tileRect.x + 8, tileRect.y + 8);
-      ctx.lineTo(tileRect.x + tileRect.w - 8, tileRect.y + tileRect.h - 8);
-      ctx.moveTo(tileRect.x + tileRect.w - 8, tileRect.y + 8);
-      ctx.lineTo(tileRect.x + 8, tileRect.y + tileRect.h - 8);
-      ctx.stroke();
-    }
-
-    drawFoodEmoji(ctx, FOODS[tile.type] || '🍩', tileRect.x + tileRect.w / 2, tileRect.y + tileRect.h / 2, g.tileSize * 0.62, blocked);
+    drawFoodTileBlock(ctx, tileRect, tile.type, FOODS[tile.type] || '🍩', blocked);
 
     if (tile.powerUp) {
       const badgeMeta = getPowerUpBadge(tile.powerUp);
@@ -1617,26 +2030,19 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
   for (let i = 0; i < state.maxDockSize; i += 1) {
     const slotRect = getDockSlotRect(g.dockRect, state.maxDockSize, i);
     const tile = state.dock[i];
-    const swatch = tile ? getFoodSwatch(tile.type) : null;
     roundRect(ctx, slotRect.x, slotRect.y, slotRect.w, slotRect.h, 11);
     ctx.fillStyle = tile
-      ? swatch.top
+      ? 'rgba(255,255,255,0.08)'
       : 'rgba(255,255,255,0.78)';
     ctx.fill();
     ctx.lineWidth = 1.2;
-    ctx.strokeStyle = tile ? swatch.edge : 'rgba(252,231,243,0.96)';
+    ctx.strokeStyle = tile ? 'rgba(255,255,255,0.36)' : 'rgba(252,231,243,0.96)';
     ctx.stroke();
     const isFlyingIntoSlot = (runtime.tileFlights || []).some((flight) => (
       flight.dockIndex === i && getFlightProgress(flight, now) < 1
     ));
     if (tile && !isFlyingIntoSlot) {
-      const slotGloss = ctx.createLinearGradient(slotRect.x, slotRect.y, slotRect.x, slotRect.y + slotRect.h);
-      slotGloss.addColorStop(0, 'rgba(255,255,255,0.34)');
-      slotGloss.addColorStop(1, 'rgba(255,255,255,0)');
-      roundRect(ctx, slotRect.x + 1.2, slotRect.y + 1.2, slotRect.w - 2.4, slotRect.h * 0.46, 10);
-      ctx.fillStyle = slotGloss;
-      ctx.fill();
-      drawFoodEmoji(ctx, FOODS[tile.type] || '🍩', slotRect.x + slotRect.w / 2, slotRect.y + slotRect.h / 2, Math.min(30, slotRect.h * 0.68), false);
+      drawFoodTileBlock(ctx, slotRect, tile.type, FOODS[tile.type] || '🍩', false);
     }
   }
 
