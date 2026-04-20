@@ -2,7 +2,7 @@
 
 const { ACTIONS, createInitialState, update } = require('../shared/engine');
 const { validateWeightInputs } = require('../shared/setupValidation');
-const { FOODS } = require('../shared/tileMatchLogic');
+const { FOODS, isBlocked } = require('../shared/tileMatchLogic');
 const { CHARACTER_OPTIONS } = require('../shared/characters');
 const {
   SWEET_SLASH_BASE_DURATION_MS,
@@ -189,6 +189,7 @@ function createRuntime(canvas) {
     pauseUntil: 0,
     transition: null,
     toast: null,
+    blockedTapHintUntil: 0,
     screenFlash: null,
     reboundModal: null,
     levelUpOverlay: null,
@@ -204,6 +205,7 @@ function createRuntime(canvas) {
       trail: [],
       spawnCooldown: 0,
       endingQueued: false,
+      elapsedMs: 0,
       timeLeftMs: 0,
       maxTimeMs: SWEET_SLASH_MAX_DURATION_MS,
       bonusPerHitMs: SWEET_SLASH_BONUS_PER_HIT_MS,
@@ -348,6 +350,7 @@ function applyEffects(runtime, effects) {
       runtime.slash.trail = [];
       runtime.slash.spawnCooldown = 0;
       runtime.slash.endingQueued = false;
+      runtime.slash.elapsedMs = 0;
       runtime.slash.timeLeftMs = effect.durationMs || SWEET_SLASH_BASE_DURATION_MS;
       runtime.slash.maxTimeMs = effect.maxDurationMs || SWEET_SLASH_MAX_DURATION_MS;
       runtime.slash.bonusPerHitMs = effect.bonusPerHitMs || SWEET_SLASH_BONUS_PER_HIT_MS;
@@ -433,6 +436,7 @@ function spawnSlashEntity(runtime) {
     hitMs: 0,
     rotation: (Math.random() - 0.5) * 0.28,
     spin: (Math.random() - 0.5) * 0.014,
+    speedScale: 0.92 + Math.random() * 0.18,
     cutAngle: 0,
   });
 }
@@ -459,8 +463,13 @@ function updateSlash(runtime, deltaMs) {
   if (!runtime.state.slash.active) return;
 
   runtime.slash.timeLeftMs = Math.max(0, runtime.slash.timeLeftMs - deltaMs);
+  runtime.slash.elapsedMs += deltaMs;
   const scoreDelta = runtime.state.slash.feverScore - runtime.slash.displayScore;
   runtime.slash.displayScore += scoreDelta * Math.min(1, deltaMs / 120);
+  const elapsedRamp = Math.min(1, runtime.slash.elapsedMs / 8500);
+  const speedMultiplier = 1 + elapsedRamp * 1.15;
+  const spawnIntervalScale = 1 - elapsedRamp * 0.34;
+  const frameScale = deltaMs / 16.6667;
 
   runtime.slash.spawnCooldown -= deltaMs;
   if (runtime.slash.timeLeftMs > 0 && runtime.slash.spawnCooldown <= 0) {
@@ -469,7 +478,7 @@ function updateSlash(runtime, deltaMs) {
     for (let i = 0; i < burst; i += 1) {
       spawnSlashEntity(runtime);
     }
-    runtime.slash.spawnCooldown = 65 + Math.random() * 55;
+    runtime.slash.spawnCooldown = (65 + Math.random() * 55) * spawnIntervalScale;
   }
 
   runtime.slash.entities.forEach((entity) => {
@@ -482,10 +491,11 @@ function updateSlash(runtime, deltaMs) {
       }
       return;
     }
-    entity.x += entity.vx;
-    entity.y += entity.vy;
+    const movementScale = frameScale * speedMultiplier * (entity.speedScale || 1);
+    entity.x += entity.vx * movementScale;
+    entity.y += entity.vy * movementScale;
     entity.rotation += entity.spin * deltaMs;
-    entity.vy += 0.08;
+    entity.vy += 0.08 * frameScale * (0.85 + elapsedRamp * 0.55);
     if (
       entity.x < -80 || entity.x > runtime.width + 80 ||
       entity.y < -80 || entity.y > runtime.height + 80
@@ -651,6 +661,21 @@ function handleTap(runtime, x, y) {
   }
 
   if (hit.kind === 'tile') {
+    const tile = runtime.state.tiles.find((item) => item.id === hit.id);
+    if (tile && tile.status === 'board' && isBlocked(tile, runtime.state.tiles)) {
+      if (typeof wx !== 'undefined' && wx.vibrateShort) {
+        try {
+          wx.vibrateShort({ type: 'light' });
+        } catch (_) {
+          // no-op
+        }
+      }
+      const now = Date.now();
+      if ((runtime.blockedTapHintUntil || 0) <= now) {
+        showToast(runtime, '上层食物压住了，先清上面的', 900);
+        runtime.blockedTapHintUntil = now + 450;
+      }
+    }
     dispatch(runtime, { type: ACTIONS.TAP_TILE, tileId: hit.id, now: Date.now() });
     return;
   }
@@ -666,6 +691,7 @@ function handleTap(runtime, x, y) {
     runtime.state.success = false;
     runtime.state.resultReason = '主动结束';
     showToast(runtime, '已结束本局', 1200);
+    syncSceneAudio(runtime);
     return;
   }
 
@@ -716,11 +742,17 @@ function gameLoop(runtime) {
   const now = Date.now();
   const delta = Math.min(120, now - runtime.lastTs);
   runtime.lastTs = now;
-  syncSceneAudio(runtime);
 
   const paused = (runtime.pauseUntil || 0) > now;
   if (!paused) {
-    dispatch(runtime, { type: ACTIONS.TICK, deltaMs: delta, now });
+    if (
+      runtime.state.page === 'GAME' &&
+      !runtime.state.runFinished &&
+      runtime.state.gameMode === 'CLASSIC' &&
+      !runtime.state.slash.active
+    ) {
+      dispatch(runtime, { type: ACTIONS.TICK, deltaMs: delta, now });
+    }
     updateSlash(runtime, delta);
   }
   updateTransientEffects(runtime, now);

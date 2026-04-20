@@ -689,6 +689,31 @@ function handleTripleMatch(state, action, effects, matchType, now) {
 }
 
 function update(state, action) {
+  const effects = [];
+  if (action.type === ACTIONS.TICK) {
+    if (state.page !== 'GAME' || state.runFinished) {
+      return { state, effects };
+    }
+    if (state.gameMode !== 'CLASSIC' || state.slash.active) {
+      return { state, effects };
+    }
+
+    const next = { ...state };
+    const deltaMs = Math.max(0, action.deltaMs || 16);
+    next.timeLeftMs = Math.max(0, next.timeLeftMs - deltaMs);
+    next.timeLeft = Math.ceil(next.timeLeftMs / 1000);
+
+    if (next.timeLeftMs <= 0) {
+      next.page = 'RESULT';
+      next.runFinished = true;
+      next.success = false;
+      next.resultReason = '时间耗尽';
+      emitAudio(effects, GAME_AUDIO_EVENTS.timeout);
+    }
+
+    return { state: next, effects };
+  }
+
   const next = {
     ...state,
     slash: {
@@ -703,7 +728,6 @@ function update(state, action) {
     tiles: state.tiles.slice(),
     dock: state.dock.slice(),
   };
-  const effects = [];
 
   switch (action.type) {
     case ACTIONS.SELECT_CHARACTER: {
@@ -777,28 +801,6 @@ function update(state, action) {
         next.runFinished = true;
         next.success = false;
         next.resultReason = '甜心盘满了';
-        emitAudio(effects, GAME_AUDIO_EVENTS.timeout);
-      }
-
-      return { state: next, effects };
-    }
-    case ACTIONS.TICK: {
-      if (next.page !== 'GAME' || next.runFinished) {
-        return { state: next, effects };
-      }
-      if (next.gameMode !== 'CLASSIC' || next.slash.active) {
-        return { state: next, effects };
-      }
-
-      const deltaMs = Math.max(0, action.deltaMs || 16);
-      next.timeLeftMs = Math.max(0, next.timeLeftMs - deltaMs);
-      next.timeLeft = Math.ceil(next.timeLeftMs / 1000);
-
-      if (next.timeLeftMs <= 0) {
-        next.page = 'RESULT';
-        next.runFinished = true;
-        next.success = false;
-        next.resultReason = '时间耗尽';
         emitAudio(effects, GAME_AUDIO_EVENTS.timeout);
       }
 

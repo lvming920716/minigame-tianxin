@@ -846,109 +846,59 @@ function drawOrb(ctx, x, y, radius, color) {
 }
 
 const FOOD_SWATCHES = [
-  {
-    shell: '#ff5f83',
-    mid: '#dd2f62',
-    deep: '#a61345',
-    edge: '#ffd4de',
-    glow: 'rgba(244,114,182,0.38)',
-    prism: 'rgba(255,255,255,0.18)',
-    flare: 'rgba(214,255,145,0.24)',
-    plate: '#fff8fa',
-    plateEdge: '#ffd2dc',
-  },
-  {
-    shell: '#e2b14a',
-    mid: '#b77a19',
-    deep: '#85460b',
-    edge: '#fff0c0',
-    glow: 'rgba(245,158,11,0.34)',
-    prism: 'rgba(255,247,200,0.18)',
-    flare: 'rgba(255,239,132,0.24)',
-    plate: '#fff9ef',
-    plateEdge: '#f6dfae',
-  },
-  {
-    shell: '#ffb63c',
-    mid: '#f1840d',
-    deep: '#c65310',
-    edge: '#ffeab7',
-    glow: 'rgba(251,146,60,0.34)',
-    prism: 'rgba(255,246,196,0.18)',
-    flare: 'rgba(255,231,115,0.24)',
-    plate: '#fff9f0',
-    plateEdge: '#ffe0af',
-  },
-  {
-    shell: '#7fd98a',
-    mid: '#35a855',
-    deep: '#176833',
-    edge: '#dff8df',
-    glow: 'rgba(34,197,94,0.32)',
-    prism: 'rgba(233,255,240,0.16)',
-    flare: 'rgba(255,247,184,0.18)',
-    plate: '#f7fff8',
-    plateEdge: '#cdeed2',
-  },
-  {
-    shell: '#5dd9cc',
-    mid: '#1aa39e',
-    deep: '#0b6770',
-    edge: '#d6fbfb',
-    glow: 'rgba(20,184,166,0.32)',
-    prism: 'rgba(233,255,255,0.16)',
-    flare: 'rgba(191,248,255,0.22)',
-    plate: '#f4ffff',
-    plateEdge: '#c9f2f2',
-  },
-  {
-    shell: '#57b6ff',
-    mid: '#2e71ea',
-    deep: '#183fb0',
-    edge: '#d7edff',
-    glow: 'rgba(59,130,246,0.34)',
-    prism: 'rgba(232,245,255,0.18)',
-    flare: 'rgba(142,255,255,0.18)',
-    plate: '#f5fbff',
-    plateEdge: '#d2e8ff',
-  },
-  {
-    shell: '#9251ef',
-    mid: '#5b24cb',
-    deep: '#3a139d',
-    edge: '#eadbff',
-    glow: 'rgba(139,92,246,0.36)',
-    prism: 'rgba(243,235,255,0.18)',
-    flare: 'rgba(148,220,255,0.2)',
-    plate: '#faf7ff',
-    plateEdge: '#ddd3ff',
-  },
-  {
-    shell: '#e74f86',
-    mid: '#b71f57',
-    deep: '#860f3d',
-    edge: '#ffd7e3',
-    glow: 'rgba(236,72,153,0.36)',
-    prism: 'rgba(255,233,244,0.18)',
-    flare: 'rgba(255,221,128,0.2)',
-    plate: '#fff7fa',
-    plateEdge: '#ffd4df',
-  },
+  { accent: '#f59db4', accentSoft: '#fde7ee', accentStrong: '#e884a0', surfaceTop: '#fffdfc', surfaceBottom: '#fff7f8', border: '#f6d6df', ink: '#6a5560', chip: '#ffe5ec' },
+  { accent: '#f0b272', accentSoft: '#fdf0df', accentStrong: '#d99145', surfaceTop: '#fffdf9', surfaceBottom: '#fff7ef', border: '#f3dfc8', ink: '#675646', chip: '#ffe9cf' },
+  { accent: '#f3c95c', accentSoft: '#fbf2d8', accentStrong: '#d7ad3b', surfaceTop: '#fffef9', surfaceBottom: '#fff9ef', border: '#f2e6c4', ink: '#6d5b40', chip: '#fff0ba' },
+  { accent: '#93c9a1', accentSoft: '#e8f4eb', accentStrong: '#6ead7f', surfaceTop: '#fcfefc', surfaceBottom: '#f3fbf4', border: '#d8eadb', ink: '#526658', chip: '#def1e2' },
+  { accent: '#88cdc7', accentSoft: '#e5f7f5', accentStrong: '#5fb8ae', surfaceTop: '#fbfefe', surfaceBottom: '#f1fbfa', border: '#d3ece8', ink: '#4f6666', chip: '#dff5f2' },
+  { accent: '#8db8ea', accentSoft: '#e7f1fc', accentStrong: '#6c9ddd', surfaceTop: '#fbfdff', surfaceBottom: '#f2f7fd', border: '#d8e5f6', ink: '#536379', chip: '#e2ecfb' },
+  { accent: '#b29be5', accentSoft: '#efe9fb', accentStrong: '#957ed5', surfaceTop: '#fdfcff', surfaceBottom: '#f7f2fd', border: '#e2daf6', ink: '#5c5672', chip: '#ece4fa' },
+  { accent: '#e7a2bf', accentSoft: '#fce8f0', accentStrong: '#d783a8', surfaceTop: '#fffdfd', surfaceBottom: '#fff5f8', border: '#f2d7e3', ink: '#6b5360', chip: '#ffe4ee' },
+  { accent: '#b9a38f', accentSoft: '#f4ede7', accentStrong: '#9e866f', surfaceTop: '#fffdfb', surfaceBottom: '#faf5f0', border: '#e8ddd2', ink: '#66584e', chip: '#eee2d7' },
+  { accent: '#9fc4c8', accentSoft: '#ebf5f6', accentStrong: '#7da9ad', surfaceTop: '#fcfefe', surfaceBottom: '#f4fbfb', border: '#dbecef', ink: '#526466', chip: '#e5f2f4' },
 ];
 
-const FOOD_TILE_BUBBLES = [
-  { x: 0.2, y: 0.32, r: 0.034, a: 0.95 },
-  { x: 0.28, y: 0.22, r: 0.024, a: 0.82 },
-  { x: 0.42, y: 0.18, r: 0.02, a: 0.7 },
-  { x: 0.66, y: 0.22, r: 0.03, a: 0.84 },
-  { x: 0.8, y: 0.34, r: 0.026, a: 0.72 },
-  { x: 0.82, y: 0.56, r: 0.032, a: 0.86 },
-  { x: 0.7, y: 0.74, r: 0.022, a: 0.76 },
-  { x: 0.5, y: 0.82, r: 0.02, a: 0.64 },
-  { x: 0.28, y: 0.76, r: 0.028, a: 0.8 },
-  { x: 0.18, y: 0.6, r: 0.024, a: 0.72 },
-  { x: 0.18, y: 0.46, r: 0.016, a: 0.62 },
-  { x: 0.56, y: 0.14, r: 0.014, a: 0.66 },
+const FOOD_ICON_SPECS = [
+  { kind: 'bubbleTea' },
+  { kind: 'fries' },
+  { kind: 'candy' },
+  { kind: 'noodle' },
+  { kind: 'cone' },
+  { kind: 'sushi' },
+  { kind: 'onigiri' },
+  { kind: 'donut' },
+  { kind: 'cake' },
+  { kind: 'burger' },
+  { kind: 'pizza' },
+  { kind: 'taco' },
+  { kind: 'cupcake' },
+  { kind: 'popcorn' },
+  { kind: 'hotdog' },
+  { kind: 'soda' },
+  { kind: 'dango' },
+  { kind: 'pancake' },
+  { kind: 'chocolate' },
+  { kind: 'waffle' },
+  { kind: 'cookie' },
+  { kind: 'pretzel' },
+  { kind: 'lollipop' },
+  { kind: 'pudding' },
+  { kind: 'honey' },
+  { kind: 'peanuts' },
+  { kind: 'cracker' },
+  { kind: 'naruto' },
+  { kind: 'mooncake' },
+  { kind: 'gelato' },
+  { kind: 'shavedIce' },
+  { kind: 'potato' },
+  { kind: 'chestnut' },
+  { kind: 'bacon' },
+  { kind: 'drumstick' },
+  { kind: 'steak' },
+  { kind: 'shrimp' },
+  { kind: 'cheese' },
+  { kind: 'bread' },
+  { kind: 'sandwich' },
 ];
 
 function getFoodSwatch(type) {
@@ -956,254 +906,586 @@ function getFoodSwatch(type) {
   return FOOD_SWATCHES[index];
 }
 
-function getFoodTileRadius(rect) {
-  return Math.min(rect.w, rect.h) * 0.2;
+function getFoodIconSpec(type) {
+  const index = Math.abs(Number(type) || 0) % FOOD_ICON_SPECS.length;
+  return FOOD_ICON_SPECS[index];
 }
 
-function drawFoodTileBubbles(ctx, rect, blocked) {
-  if (blocked) return;
-  const minSide = Math.min(rect.w, rect.h);
-  FOOD_TILE_BUBBLES.forEach((bubble) => {
-    const x = rect.x + rect.w * bubble.x;
-    const y = rect.y + rect.h * bubble.y;
-    const r = Math.max(1.2, minSide * bubble.r);
-    ctx.beginPath();
-    ctx.fillStyle = `rgba(255,255,255,${bubble.a})`;
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.fillStyle = `rgba(255,255,255,${Math.max(0.18, bubble.a * 0.46)})`;
-    ctx.arc(x - r * 0.32, y - r * 0.34, r * 0.38, 0, Math.PI * 2);
-    ctx.fill();
-  });
+function drawCenteredRoundRect(ctx, cx, cy, w, h, r) {
+  roundRect(ctx, cx - w / 2, cy - h / 2, w, h, r);
 }
 
-function drawFoodTileMedallion(ctx, rect, swatch, blocked) {
-  const minSide = Math.min(rect.w, rect.h);
-  const cx = rect.x + rect.w / 2;
-  const cy = rect.y + rect.h / 2;
-  const outerR = minSide * 0.275;
-  const innerR = outerR * 0.68;
-  const plate = blocked ? '#ffffff' : swatch.plate;
-  const plateEdge = blocked ? 'rgba(226,232,240,0.98)' : swatch.plateEdge;
-
-  ctx.save();
-  ctx.shadowColor = blocked ? 'rgba(148,163,184,0.18)' : 'rgba(255,255,255,0.56)';
-  ctx.shadowBlur = minSide * 0.14;
-  ctx.shadowOffsetY = minSide * 0.04;
-  const outerFill = ctx.createRadialGradient(
-    cx - outerR * 0.26,
-    cy - outerR * 0.34,
-    outerR * 0.1,
-    cx,
-    cy,
-    outerR * 1.08
-  );
-  outerFill.addColorStop(0, '#ffffff');
-  outerFill.addColorStop(0.6, plate);
-  outerFill.addColorStop(1, plateEdge);
+function fillDot(ctx, x, y, r, color) {
   ctx.beginPath();
-  ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
-  ctx.fillStyle = outerFill;
+  ctx.fillStyle = color;
+  ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
-  ctx.shadowColor = 'transparent';
-  ctx.lineWidth = Math.max(1.2, minSide * 0.024);
-  ctx.strokeStyle = blocked ? 'rgba(226,232,240,0.98)' : 'rgba(255,255,255,0.98)';
+}
+
+function strokeSegment(ctx, x1, y1, x2, y2, width, color) {
+  ctx.beginPath();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = width;
+  ctx.strokeStyle = color;
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
   ctx.stroke();
+}
 
-  const innerFill = ctx.createRadialGradient(
-    cx - innerR * 0.18,
-    cy - innerR * 0.24,
-    innerR * 0.08,
-    cx,
-    cy,
-    innerR
-  );
-  innerFill.addColorStop(0, '#ffffff');
-  innerFill.addColorStop(1, blocked ? 'rgba(248,250,252,0.98)' : 'rgba(255,255,255,0.9)');
-  ctx.beginPath();
-  ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-  ctx.fillStyle = innerFill;
+function drawFoodTileSignature(ctx, rect, type, swatch, blocked) {
+  const pillW = Math.min(rect.w * 0.3, 18);
+  const pillH = Math.min(rect.h * 0.11, 7);
+  const pillX = rect.x + rect.w / 2 - pillW / 2;
+  const pillY = rect.y + Math.max(5, rect.h * 0.11);
+  const dotCount = 2 + (Math.abs(type) % 2);
+  ctx.save();
+  roundRect(ctx, pillX, pillY, pillW, pillH, 999);
+  ctx.fillStyle = blocked ? 'rgba(226,232,240,0.95)' : swatch.chip;
   ctx.fill();
-
-  ctx.beginPath();
-  ctx.fillStyle = 'rgba(255,255,255,0.86)';
-  ctx.ellipse(cx - outerR * 0.26, cy - outerR * 0.34, outerR * 0.32, outerR * 0.15, -0.45, 0, Math.PI * 2);
-  ctx.fill();
+  for (let i = 0; i < dotCount; i += 1) {
+    const x = pillX + pillW * ((i + 1) / (dotCount + 1));
+    fillDot(ctx, x, pillY + pillH / 2, 0.8 + dotCount * 0.12, blocked ? '#cbd5e1' : swatch.accentStrong);
+  }
   ctx.restore();
 }
 
-function fillFoodTileSurface(ctx, rect, swatch, blocked) {
-  const radius = getFoodTileRadius(rect);
-  const minSide = Math.min(rect.w, rect.h);
-  const inset = Math.max(4, minSide * 0.075);
-  const inner = {
-    x: rect.x + inset,
-    y: rect.y + inset,
-    w: rect.w - inset * 2,
-    h: rect.h - inset * 2,
-  };
-
+function drawBlockedTileCover(ctx, rect) {
+  const shadowY = rect.y + rect.h * 0.28;
   ctx.save();
-  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, Math.max(10, Math.min(rect.w, rect.h) * 0.24));
   ctx.clip();
 
-  const fill = ctx.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y + rect.h);
-  if (blocked) {
-    fill.addColorStop(0, 'rgba(241,245,249,0.98)');
-    fill.addColorStop(0.58, 'rgba(203,213,225,0.98)');
-    fill.addColorStop(1, 'rgba(148,163,184,0.98)');
-  } else {
-    fill.addColorStop(0, swatch.shell);
-    fill.addColorStop(0.52, swatch.mid);
-    fill.addColorStop(1, swatch.deep);
-  }
-  ctx.fillStyle = fill;
+  const veil = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h);
+  veil.addColorStop(0, 'rgba(226,232,240,0.08)');
+  veil.addColorStop(0.45, 'rgba(148,163,184,0.14)');
+  veil.addColorStop(1, 'rgba(100,116,139,0.18)');
+  ctx.fillStyle = veil;
   ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
 
-  const bloom = ctx.createRadialGradient(
-    rect.x + rect.w * 0.32,
-    rect.y + rect.h * 0.28,
-    minSide * 0.08,
-    rect.x + rect.w * 0.5,
-    rect.y + rect.h * 0.5,
-    minSide * 0.8
-  );
-  bloom.addColorStop(0, blocked ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.32)');
-  bloom.addColorStop(0.55, blocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.12)');
-  bloom.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = bloom;
-  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  const softShadow = ctx.createLinearGradient(rect.x, rect.y, rect.x, shadowY + 10);
+  softShadow.addColorStop(0, 'rgba(100,116,139,0.16)');
+  softShadow.addColorStop(0.6, 'rgba(148,163,184,0.08)');
+  softShadow.addColorStop(1, 'rgba(148,163,184,0)');
+  ctx.fillStyle = softShadow;
+  ctx.fillRect(rect.x, rect.y, rect.w, shadowY - rect.y + 10);
 
-  const innerFill = ctx.createLinearGradient(inner.x, inner.y, inner.x, inner.y + inner.h);
-  if (blocked) {
-    innerFill.addColorStop(0, 'rgba(255,255,255,0.12)');
-    innerFill.addColorStop(1, 'rgba(148,163,184,0.16)');
-  } else {
-    innerFill.addColorStop(0, 'rgba(255,255,255,0.08)');
-    innerFill.addColorStop(0.45, swatch.prism);
-    innerFill.addColorStop(1, 'rgba(255,255,255,0.03)');
-  }
-  roundRect(ctx, inner.x, inner.y, inner.w, inner.h, Math.max(8, radius - inset * 0.35));
-  ctx.fillStyle = innerFill;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(rect.x + rect.w * 0.5, rect.y + inset * 0.35);
-  ctx.lineTo(rect.x + rect.w - inset * 0.3, rect.y + rect.h * 0.5);
-  ctx.lineTo(rect.x + rect.w * 0.5, rect.y + rect.h - inset * 0.35);
-  ctx.lineTo(rect.x + inset * 0.3, rect.y + rect.h * 0.5);
-  ctx.closePath();
-  ctx.fillStyle = blocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.16)';
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(rect.x, rect.y + rect.h * 0.42);
-  ctx.lineTo(rect.x + rect.w * 0.42, rect.y);
-  ctx.lineTo(rect.x + rect.w * 0.72, rect.y);
-  ctx.lineTo(rect.x + rect.w * 0.18, rect.y + rect.h * 0.54);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(255,255,255,0.34)';
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(rect.x + rect.w * 0.54, rect.y + rect.h);
-  ctx.lineTo(rect.x + rect.w, rect.y + rect.h * 0.54);
-  ctx.lineTo(rect.x + rect.w, rect.y + rect.h * 0.86);
-  ctx.lineTo(rect.x + rect.w * 0.72, rect.y + rect.h);
-  ctx.closePath();
-  ctx.fillStyle = blocked ? 'rgba(255,255,255,0.08)' : swatch.flare;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(rect.x + rect.w * 0.08, rect.y + rect.h * 0.18);
-  ctx.lineTo(rect.x + rect.w * 0.32, rect.y + rect.h * 0.06);
-  ctx.lineTo(rect.x + rect.w * 0.88, rect.y + rect.h * 0.62);
-  ctx.lineTo(rect.x + rect.w * 0.66, rect.y + rect.h * 0.76);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(255,255,255,0.16)';
-  ctx.fill();
-
-  roundRect(ctx, rect.x + 1.5, rect.y + 1.5, rect.w - 3, rect.h * 0.44, Math.max(8, radius - 2));
-  const gloss = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h * 0.48);
-  gloss.addColorStop(0, 'rgba(255,255,255,0.82)');
-  gloss.addColorStop(0.42, 'rgba(255,255,255,0.28)');
-  gloss.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = gloss;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(rect.x + rect.w * 0.1, rect.y + rect.h * 0.12);
-  ctx.lineTo(rect.x + rect.w * 0.24, rect.y + rect.h * 0.06);
-  ctx.lineTo(rect.x + rect.w * 0.8, rect.y + rect.h * 0.62);
-  ctx.lineTo(rect.x + rect.w * 0.7, rect.y + rect.h * 0.68);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(255,255,255,0.26)';
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.ellipse(rect.x + rect.w * 0.18, rect.y + rect.h * 0.16, rect.w * 0.16, rect.h * 0.06, -0.55, 0, Math.PI * 2);
-  ctx.fill();
   ctx.restore();
 
   ctx.save();
-  ctx.lineWidth = Math.max(1.2, minSide * 0.03);
-  ctx.strokeStyle = blocked ? 'rgba(148,163,184,0.9)' : swatch.edge;
-  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.38)';
+  ctx.beginPath();
+  ctx.moveTo(rect.x + rect.w * 0.16, shadowY);
+  ctx.lineTo(rect.x + rect.w * 0.84, shadowY);
   ctx.stroke();
-  ctx.lineWidth = Math.max(1, minSide * 0.018);
-  ctx.strokeStyle = blocked ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.5)';
-  roundRect(ctx, inner.x, inner.y, inner.w, inner.h, Math.max(8, radius - inset * 0.35));
-  ctx.stroke();
+  ctx.restore();
+}
+
+function drawFoodGlyph(ctx, type, cx, cy, size, colors) {
+  const spec = getFoodIconSpec(type);
+  const kind = spec.kind;
+  const accent = colors.accent;
+  const accentSoft = colors.accentSoft;
+  const accentStrong = colors.accentStrong;
+  const cream = colors.cream;
+  const ink = colors.ink;
+  const line = Math.max(1.4, size * 0.075);
+  const half = size / 2;
+
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  switch (kind) {
+    case 'bubbleTea':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.08, size * 0.42, size * 0.58, size * 0.1);
+      ctx.fillStyle = accentSoft;
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.06, cy - size * 0.38, cx + size * 0.1, cy - size * 0.02, line, ink);
+      fillDot(ctx, cx - size * 0.12, cy + size * 0.2, size * 0.05, accentStrong);
+      fillDot(ctx, cx, cy + size * 0.2, size * 0.05, accentStrong);
+      fillDot(ctx, cx + size * 0.12, cy + size * 0.2, size * 0.05, accentStrong);
+      break;
+    case 'fries':
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.24, cy + size * 0.24);
+      ctx.lineTo(cx - size * 0.16, cy - size * 0.06);
+      ctx.lineTo(cx + size * 0.16, cy - size * 0.06);
+      ctx.lineTo(cx + size * 0.24, cy + size * 0.24);
+      ctx.closePath();
+      ctx.fillStyle = accent;
+      ctx.fill();
+      for (let i = -1; i <= 1; i += 1) {
+        drawCenteredRoundRect(ctx, cx + i * size * 0.12, cy - size * 0.18, size * 0.08, size * 0.26, size * 0.04);
+        ctx.fillStyle = '#ffe3a6';
+        ctx.fill();
+      }
+      break;
+    case 'candy':
+      drawCenteredRoundRect(ctx, cx, cy, size * 0.36, size * 0.26, size * 0.12);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.18, cy);
+      ctx.lineTo(cx - size * 0.3, cy - size * 0.1);
+      ctx.lineTo(cx - size * 0.3, cy + size * 0.1);
+      ctx.closePath();
+      ctx.fillStyle = accentSoft;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + size * 0.18, cy);
+      ctx.lineTo(cx + size * 0.3, cy - size * 0.1);
+      ctx.lineTo(cx + size * 0.3, cy + size * 0.1);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 'noodle':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.18, size * 0.46, size * 0.2, size * 0.09);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.16, cy - size * 0.24, cx + size * 0.22, cy - size * 0.34, line * 0.9, ink);
+      strokeSegment(ctx, cx - size * 0.1, cy - size * 0.16, cx + size * 0.16, cy - size * 0.16, line * 0.9, accentStrong);
+      strokeSegment(ctx, cx - size * 0.12, cy - size * 0.08, cx + size * 0.12, cy - size * 0.08, line * 0.9, accentStrong);
+      break;
+    case 'cone':
+      fillDot(ctx, cx, cy - size * 0.08, size * 0.19, accent);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + size * 0.3);
+      ctx.lineTo(cx - size * 0.16, cy + size * 0.02);
+      ctx.lineTo(cx + size * 0.16, cy + size * 0.02);
+      ctx.closePath();
+      ctx.fillStyle = '#efc28f';
+      ctx.fill();
+      break;
+    case 'sushi':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.04, size * 0.42, size * 0.26, size * 0.09);
+      ctx.fillStyle = cream;
+      ctx.fill();
+      drawCenteredRoundRect(ctx, cx, cy - size * 0.06, size * 0.38, size * 0.12, size * 0.06);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      strokeSegment(ctx, cx, cy - size * 0.1, cx, cy + size * 0.16, line * 0.9, ink);
+      break;
+    case 'onigiri':
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size * 0.24);
+      ctx.lineTo(cx - size * 0.22, cy + size * 0.18);
+      ctx.lineTo(cx + size * 0.22, cy + size * 0.18);
+      ctx.closePath();
+      ctx.fillStyle = cream;
+      ctx.fill();
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.08, size * 0.16, size * 0.14, size * 0.04);
+      ctx.fillStyle = ink;
+      ctx.fill();
+      break;
+    case 'donut':
+      fillDot(ctx, cx, cy, size * 0.24, accent);
+      fillDot(ctx, cx, cy, size * 0.1, '#fffdfb');
+      fillDot(ctx, cx - size * 0.12, cy - size * 0.12, size * 0.018, '#ffffff');
+      fillDot(ctx, cx, cy - size * 0.16, size * 0.018, '#ffffff');
+      fillDot(ctx, cx + size * 0.12, cy - size * 0.04, size * 0.018, '#ffffff');
+      break;
+    case 'cake':
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.2, cy + size * 0.16);
+      ctx.lineTo(cx - size * 0.04, cy - size * 0.18);
+      ctx.lineTo(cx + size * 0.22, cy + size * 0.16);
+      ctx.closePath();
+      ctx.fillStyle = cream;
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.04, cy - size * 0.18, cx + size * 0.1, cy - size * 0.12, line, accent);
+      fillDot(ctx, cx + size * 0.03, cy - size * 0.23, size * 0.04, accentStrong);
+      break;
+    case 'burger':
+      fillDot(ctx, cx, cy - size * 0.12, size * 0.19, '#f2d1a6');
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.02, size * 0.42, size * 0.08, size * 0.03);
+      ctx.fillStyle = accentStrong;
+      ctx.fill();
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.16, size * 0.44, size * 0.12, size * 0.05);
+      ctx.fillStyle = '#f2d1a6';
+      ctx.fill();
+      break;
+    case 'pizza':
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + size * 0.24);
+      ctx.lineTo(cx - size * 0.22, cy - size * 0.2);
+      ctx.lineTo(cx + size * 0.22, cy - size * 0.2);
+      ctx.closePath();
+      ctx.fillStyle = '#fff1d8';
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.22, cy - size * 0.2, cx + size * 0.22, cy - size * 0.2, line, '#efbe73');
+      fillDot(ctx, cx - size * 0.05, cy - size * 0.02, size * 0.04, accentStrong);
+      fillDot(ctx, cx + size * 0.08, cy + size * 0.06, size * 0.04, accentStrong);
+      break;
+    case 'taco':
+      ctx.beginPath();
+      ctx.arc(cx, cy + size * 0.05, size * 0.2, Math.PI, 0);
+      ctx.lineTo(cx + size * 0.2, cy + size * 0.16);
+      ctx.lineTo(cx - size * 0.2, cy + size * 0.16);
+      ctx.closePath();
+      ctx.fillStyle = '#f2d39b';
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.14, cy - size * 0.04, cx + size * 0.14, cy - size * 0.04, line * 0.8, accent);
+      break;
+    case 'cupcake':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.16, size * 0.28, size * 0.18, size * 0.05);
+      ctx.fillStyle = '#e8d6cf';
+      ctx.fill();
+      fillDot(ctx, cx, cy - size * 0.04, size * 0.18, accent);
+      fillDot(ctx, cx - size * 0.1, cy + size * 0.02, size * 0.11, accentSoft);
+      fillDot(ctx, cx + size * 0.1, cy + size * 0.02, size * 0.11, accentSoft);
+      break;
+    case 'popcorn':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.14, size * 0.3, size * 0.24, size * 0.05);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      fillDot(ctx, cx - size * 0.12, cy - size * 0.06, size * 0.09, '#fff4dc');
+      fillDot(ctx, cx, cy - size * 0.12, size * 0.1, '#fff4dc');
+      fillDot(ctx, cx + size * 0.12, cy - size * 0.04, size * 0.09, '#fff4dc');
+      break;
+    case 'hotdog':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.03, size * 0.48, size * 0.18, size * 0.09);
+      ctx.fillStyle = '#f2cfaa';
+      ctx.fill();
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.02, size * 0.32, size * 0.09, size * 0.045);
+      ctx.fillStyle = accentStrong;
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.12, cy - size * 0.02, cx + size * 0.12, cy + size * 0.04, line * 0.6, '#f4cf62');
+      break;
+    case 'soda':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.06, size * 0.3, size * 0.5, size * 0.08);
+      ctx.fillStyle = accentSoft;
+      ctx.fill();
+      strokeSegment(ctx, cx + size * 0.04, cy - size * 0.34, cx + size * 0.14, cy - size * 0.06, line, ink);
+      fillDot(ctx, cx - size * 0.04, cy - size * 0.02, size * 0.025, accentStrong);
+      fillDot(ctx, cx + size * 0.04, cy + size * 0.08, size * 0.03, accentStrong);
+      break;
+    case 'dango':
+      strokeSegment(ctx, cx - size * 0.24, cy + size * 0.22, cx + size * 0.22, cy - size * 0.16, line * 0.7, '#c8a37f');
+      fillDot(ctx, cx - size * 0.1, cy + size * 0.08, size * 0.08, accentSoft);
+      fillDot(ctx, cx, cy, size * 0.08, accent);
+      fillDot(ctx, cx + size * 0.1, cy - size * 0.08, size * 0.08, accentStrong);
+      break;
+    case 'pancake':
+      for (let i = 0; i < 3; i += 1) {
+        drawCenteredRoundRect(ctx, cx, cy + size * (0.1 - i * 0.1), size * 0.42, size * 0.1, size * 0.05);
+        ctx.fillStyle = '#f0cf9c';
+        ctx.fill();
+      }
+      strokeSegment(ctx, cx - size * 0.1, cy - size * 0.12, cx + size * 0.12, cy - size * 0.08, line * 0.8, accentStrong);
+      break;
+    case 'chocolate':
+      drawCenteredRoundRect(ctx, cx, cy, size * 0.38, size * 0.5, size * 0.05);
+      ctx.fillStyle = '#73564e';
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.12, cy - size * 0.04, cx + size * 0.12, cy - size * 0.04, line * 0.5, '#9f8075');
+      strokeSegment(ctx, cx - size * 0.12, cy + size * 0.1, cx + size * 0.12, cy + size * 0.1, line * 0.5, '#9f8075');
+      strokeSegment(ctx, cx, cy - size * 0.2, cx, cy + size * 0.2, line * 0.5, '#9f8075');
+      break;
+    case 'waffle':
+      drawCenteredRoundRect(ctx, cx, cy, size * 0.4, size * 0.4, size * 0.05);
+      ctx.fillStyle = '#edd19b';
+      ctx.fill();
+      for (let i = -1; i <= 1; i += 1) {
+        strokeSegment(ctx, cx - size * 0.18, cy + i * size * 0.08, cx + size * 0.18, cy + i * size * 0.08, line * 0.5, '#d7b572');
+        strokeSegment(ctx, cx + i * size * 0.08, cy - size * 0.18, cx + i * size * 0.08, cy + size * 0.18, line * 0.5, '#d7b572');
+      }
+      break;
+    case 'cookie':
+      fillDot(ctx, cx, cy, size * 0.22, '#f1d1a5');
+      fillDot(ctx, cx - size * 0.08, cy - size * 0.02, size * 0.03, '#b8845f');
+      fillDot(ctx, cx + size * 0.06, cy - size * 0.08, size * 0.025, '#b8845f');
+      fillDot(ctx, cx + size * 0.1, cy + size * 0.08, size * 0.03, '#b8845f');
+      break;
+    case 'pretzel':
+      ctx.strokeStyle = accentStrong;
+      ctx.lineWidth = line;
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.14, cy - size * 0.02);
+      ctx.bezierCurveTo(cx - size * 0.28, cy - size * 0.2, cx - size * 0.18, cy + size * 0.16, cx, cy + size * 0.04);
+      ctx.bezierCurveTo(cx + size * 0.18, cy + size * 0.16, cx + size * 0.28, cy - size * 0.2, cx + size * 0.14, cy - size * 0.02);
+      ctx.stroke();
+      strokeSegment(ctx, cx - size * 0.2, cy + size * 0.12, cx + size * 0.2, cy + size * 0.12, line, accentStrong);
+      break;
+    case 'lollipop':
+      strokeSegment(ctx, cx, cy + size * 0.02, cx + size * 0.14, cy + size * 0.26, line * 0.8, '#c8a9a0');
+      fillDot(ctx, cx - size * 0.02, cy - size * 0.04, size * 0.18, accent);
+      break;
+    case 'pudding':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.06, size * 0.38, size * 0.3, size * 0.12);
+      ctx.fillStyle = '#f5d5a3';
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.18, cy - size * 0.08, cx + size * 0.18, cy - size * 0.08, line * 0.8, accentStrong);
+      break;
+    case 'honey':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.02, size * 0.32, size * 0.38, size * 0.06);
+      ctx.fillStyle = '#fff4da';
+      ctx.fill();
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.08, size * 0.26, size * 0.22, size * 0.05);
+      ctx.fillStyle = '#efc563';
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.12, cy - size * 0.16, cx + size * 0.12, cy - size * 0.16, line * 0.8, ink);
+      break;
+    case 'peanuts':
+      fillDot(ctx, cx - size * 0.08, cy, size * 0.12, '#e0bc8f');
+      fillDot(ctx, cx + size * 0.08, cy, size * 0.12, '#d8b284');
+      break;
+    case 'cracker':
+      drawCenteredRoundRect(ctx, cx, cy, size * 0.34, size * 0.26, size * 0.08);
+      ctx.fillStyle = '#f0d9b0';
+      ctx.fill();
+      fillDot(ctx, cx - size * 0.08, cy - size * 0.04, size * 0.018, '#d1b285');
+      fillDot(ctx, cx + size * 0.08, cy - size * 0.02, size * 0.018, '#d1b285');
+      fillDot(ctx, cx, cy + size * 0.05, size * 0.018, '#d1b285');
+      break;
+    case 'naruto':
+      fillDot(ctx, cx, cy, size * 0.18, '#fff8fb');
+      ctx.strokeStyle = accentStrong;
+      ctx.lineWidth = line * 0.8;
+      ctx.beginPath();
+      ctx.arc(cx, cy, size * 0.1, 0, Math.PI * 1.6);
+      ctx.stroke();
+      break;
+    case 'mooncake':
+      fillDot(ctx, cx, cy, size * 0.2, '#ebc999');
+      strokeSegment(ctx, cx - size * 0.1, cy, cx + size * 0.1, cy, line * 0.7, '#c49761');
+      strokeSegment(ctx, cx, cy - size * 0.1, cx, cy + size * 0.1, line * 0.7, '#c49761');
+      break;
+    case 'gelato':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.18, size * 0.24, size * 0.18, size * 0.04);
+      ctx.fillStyle = '#ecdad0';
+      ctx.fill();
+      fillDot(ctx, cx - size * 0.08, cy + size * 0.02, size * 0.1, accentSoft);
+      fillDot(ctx, cx + size * 0.08, cy, size * 0.1, accent);
+      break;
+    case 'shavedIce':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.16, size * 0.36, size * 0.16, size * 0.05);
+      ctx.fillStyle = '#e6d8ce';
+      ctx.fill();
+      fillDot(ctx, cx, cy - size * 0.02, size * 0.18, accentSoft);
+      break;
+    case 'potato':
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-0.28);
+      drawCenteredRoundRect(ctx, 0, 0, size * 0.34, size * 0.22, size * 0.1);
+      ctx.fillStyle = '#d3976d';
+      ctx.fill();
+      ctx.restore();
+      strokeSegment(ctx, cx - size * 0.08, cy + size * 0.02, cx + size * 0.06, cy - size * 0.02, line * 0.6, '#f1c088');
+      break;
+    case 'chestnut':
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size * 0.22);
+      ctx.bezierCurveTo(cx - size * 0.2, cy - size * 0.06, cx - size * 0.22, cy + size * 0.18, cx, cy + size * 0.22);
+      ctx.bezierCurveTo(cx + size * 0.22, cy + size * 0.18, cx + size * 0.2, cy - size * 0.06, cx, cy - size * 0.22);
+      ctx.fillStyle = '#a56b4d';
+      ctx.fill();
+      break;
+    case 'bacon':
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-0.12);
+      ctx.strokeStyle = accentStrong;
+      ctx.lineWidth = size * 0.16;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.2, -size * 0.16);
+      ctx.bezierCurveTo(-size * 0.1, -size * 0.28, size * 0.04, -size * 0.04, size * 0.14, -size * 0.16);
+      ctx.bezierCurveTo(size * 0.22, -size * 0.28, size * 0.26, 0, size * 0.18, size * 0.18);
+      ctx.stroke();
+      ctx.strokeStyle = '#f8d2d2';
+      ctx.lineWidth = size * 0.06;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.18, -size * 0.14);
+      ctx.bezierCurveTo(-size * 0.08, -size * 0.22, size * 0.02, 0, size * 0.12, -size * 0.12);
+      ctx.bezierCurveTo(size * 0.2, -size * 0.2, size * 0.22, 0.02, size * 0.14, size * 0.16);
+      ctx.stroke();
+      ctx.restore();
+      break;
+    case 'drumstick':
+      fillDot(ctx, cx - size * 0.04, cy - size * 0.02, size * 0.16, accentStrong);
+      strokeSegment(ctx, cx + size * 0.04, cy + size * 0.08, cx + size * 0.2, cy + size * 0.2, line, '#d3b9a6');
+      fillDot(ctx, cx + size * 0.22, cy + size * 0.22, size * 0.04, '#efe3d9');
+      fillDot(ctx, cx + size * 0.16, cy + size * 0.16, size * 0.04, '#efe3d9');
+      break;
+    case 'steak':
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.18, cy);
+      ctx.bezierCurveTo(cx - size * 0.22, cy - size * 0.18, cx + size * 0.12, cy - size * 0.2, cx + size * 0.22, cy - size * 0.04);
+      ctx.bezierCurveTo(cx + size * 0.24, cy + size * 0.14, cx, cy + size * 0.22, cx - size * 0.14, cy + size * 0.16);
+      ctx.closePath();
+      ctx.fillStyle = accentStrong;
+      ctx.fill();
+      fillDot(ctx, cx + size * 0.02, cy + size * 0.02, size * 0.07, '#f8d6d3');
+      break;
+    case 'shrimp':
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-0.32);
+      ctx.strokeStyle = accentStrong;
+      ctx.lineWidth = size * 0.16;
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.16, Math.PI * 0.1, Math.PI * 1.2);
+      ctx.stroke();
+      strokeSegment(ctx, size * 0.1, -size * 0.16, size * 0.22, -size * 0.24, line * 0.6, accentStrong);
+      ctx.restore();
+      break;
+    case 'cheese':
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.18, cy + size * 0.16);
+      ctx.lineTo(cx - size * 0.12, cy - size * 0.12);
+      ctx.lineTo(cx + size * 0.22, cy + size * 0.08);
+      ctx.closePath();
+      ctx.fillStyle = '#f1cf70';
+      ctx.fill();
+      fillDot(ctx, cx - size * 0.02, cy + size * 0.02, size * 0.03, '#f8ebac');
+      fillDot(ctx, cx + size * 0.08, cy + size * 0.08, size * 0.025, '#f8ebac');
+      break;
+    case 'bread':
+      drawCenteredRoundRect(ctx, cx, cy + size * 0.02, size * 0.4, size * 0.34, size * 0.12);
+      ctx.fillStyle = '#efd1a6';
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.08, cy - size * 0.06, cx - size * 0.02, cy + size * 0.08, line * 0.5, '#ddb27c');
+      strokeSegment(ctx, cx + size * 0.04, cy - size * 0.08, cx + size * 0.1, cy + size * 0.06, line * 0.5, '#ddb27c');
+      break;
+    case 'sandwich':
+      ctx.beginPath();
+      ctx.moveTo(cx - size * 0.22, cy + size * 0.16);
+      ctx.lineTo(cx, cy - size * 0.18);
+      ctx.lineTo(cx + size * 0.22, cy + size * 0.16);
+      ctx.closePath();
+      ctx.fillStyle = '#f2dfba';
+      ctx.fill();
+      strokeSegment(ctx, cx - size * 0.12, cy + size * 0.02, cx + size * 0.12, cy + size * 0.02, line * 0.8, accent);
+      break;
+    default:
+      fillDot(ctx, cx, cy, half * 0.4, accent);
+      break;
+  }
+
+  ctx.restore();
+}
+
+function createSpriteSurface(width, height) {
+  if (typeof wx === 'undefined' || !wx.createOffscreenCanvas) return null;
+  return wx.createOffscreenCanvas({ type: '2d', width, height });
+}
+
+function getRenderCache(runtime) {
+  if (!runtime) return null;
+  if (!runtime.renderCache) {
+    runtime.renderCache = {
+      foodTileSprites: Object.create(null),
+    };
+  }
+  return runtime.renderCache;
+}
+
+function getFoodTileSprite(runtime, rect, type, emoji, blocked) {
+  const cache = getRenderCache(runtime);
+  if (!cache) return null;
+
+  const width = Math.max(1, Math.round(rect.w));
+  const height = Math.max(1, Math.round(rect.h));
+  const key = `${width}x${height}:${type}:${blocked ? 1 : 0}`;
+  if (cache.foodTileSprites[key]) {
+    return cache.foodTileSprites[key];
+  }
+
+  const surface = createSpriteSurface(width, height);
+  if (!surface) return null;
+  const surfaceCtx = surface.getContext('2d');
+  if (!surfaceCtx) return null;
+
+  drawFoodTileBlock(surfaceCtx, { x: 0, y: 0, w: width, h: height }, type, emoji, blocked);
+  cache.foodTileSprites[key] = surface;
+  return surface;
+}
+
+function drawCachedFoodTileBlock(ctx, rect, type, emoji, blocked, runtime) {
+  const sprite = getFoodTileSprite(runtime, rect, type, emoji, blocked);
+  if (!sprite) {
+    drawFoodTileBlock(ctx, rect, type, emoji, blocked);
+    return;
+  }
+  ctx.drawImage(sprite, rect.x, rect.y, rect.w, rect.h);
+}
+
+function drawFoodEmoji(ctx, emoji, x, y, size, blocked) {
+  ctx.save();
+  ctx.globalAlpha = blocked ? 0.5 : 1;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${Math.floor(size)}px sans-serif`;
+  if (!blocked) {
+    ctx.lineWidth = Math.max(1.5, size * 0.07);
+    ctx.strokeStyle = 'rgba(255,255,255,0.82)';
+    ctx.strokeText(emoji, x, y + 1);
+  }
+  ctx.shadowColor = blocked ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.14)';
+  ctx.shadowBlur = blocked ? 2 : Math.max(4, size * 0.12);
+  ctx.shadowOffsetY = blocked ? 0 : Math.max(1, size * 0.03);
+  ctx.fillText(emoji, x, y + 1);
   ctx.restore();
 }
 
 function drawFoodTileBlock(ctx, rect, type, emoji, blocked) {
   const swatch = getFoodSwatch(type);
   const minSide = Math.min(rect.w, rect.h);
+  const radius = Math.max(10, minSide * 0.24);
+  const accent = blocked ? '#cbd5e1' : swatch.accent;
+  const accentSoft = blocked ? '#f1f5f9' : swatch.accentSoft;
+  const border = blocked ? '#dbe4ee' : swatch.border;
+  const surface = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h);
+  surface.addColorStop(0, blocked ? '#ffffff' : swatch.surfaceTop);
+  surface.addColorStop(1, blocked ? '#f8fafc' : swatch.surfaceBottom);
 
   ctx.save();
-  ctx.shadowColor = blocked ? 'rgba(100,116,139,0.14)' : swatch.glow;
-  ctx.shadowBlur = blocked ? minSide * 0.12 : minSide * 0.22;
-  ctx.shadowOffsetY = blocked ? minSide * 0.05 : minSide * 0.08;
-  fillFoodTileSurface(ctx, rect, swatch, blocked);
+  ctx.shadowColor = blocked ? 'rgba(148,163,184,0.12)' : 'rgba(205,177,187,0.16)';
+  ctx.shadowBlur = Math.max(8, minSide * 0.18);
+  ctx.shadowOffsetY = Math.max(2, minSide * 0.06);
+  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  ctx.fillStyle = surface;
+  ctx.fill();
   ctx.restore();
 
-  drawFoodTileBubbles(ctx, rect, blocked);
-  drawFoodTileMedallion(ctx, rect, swatch, blocked);
-  drawFoodEmoji(ctx, emoji, rect.x + rect.w / 2, rect.y + rect.h / 2, minSide * 0.5, blocked);
+  ctx.save();
+  ctx.lineWidth = Math.max(1, minSide * 0.025);
+  ctx.strokeStyle = border;
+  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  ctx.stroke();
+  ctx.restore();
 
+  ctx.save();
+  roundRect(ctx, rect.x + 2, rect.y + 2, rect.w - 4, rect.h * 0.34, Math.max(8, radius - 2));
+  const gloss = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h * 0.34);
+  gloss.addColorStop(0, 'rgba(255,255,255,0.82)');
+  gloss.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gloss;
+  ctx.fill();
+  ctx.restore();
+
+  const badgeR = minSide * 0.24;
+  ctx.save();
+  ctx.beginPath();
+  ctx.fillStyle = accentSoft;
+  ctx.ellipse(rect.x + rect.w / 2, rect.y + rect.h / 2 + minSide * 0.03, badgeR * 1.26, badgeR * 1.06, 0, 0, Math.PI * 2);
+  ctx.fill();
+  fillDot(ctx, rect.x + rect.w * 0.76, rect.y + rect.h * 0.26, minSide * 0.055, accent);
+  ctx.restore();
+
+  drawFoodTileSignature(ctx, rect, type, swatch, blocked);
+  drawFoodEmoji(
+    ctx,
+    emoji,
+    rect.x + rect.w / 2,
+    rect.y + rect.h / 2 + (blocked ? minSide * 0.08 : minSide * 0.05),
+    minSide * (blocked ? 0.66 : 0.74),
+    blocked
+  );
   if (blocked) {
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = Math.max(1.2, minSide * 0.025);
-    ctx.beginPath();
-    ctx.moveTo(rect.x + rect.w * 0.22, rect.y + rect.h * 0.22);
-    ctx.lineTo(rect.x + rect.w * 0.78, rect.y + rect.h * 0.78);
-    ctx.moveTo(rect.x + rect.w * 0.78, rect.y + rect.h * 0.22);
-    ctx.lineTo(rect.x + rect.w * 0.22, rect.y + rect.h * 0.78);
-    ctx.stroke();
-    ctx.restore();
+    drawBlockedTileCover(ctx, rect);
   }
-}
-
-function drawFoodEmoji(ctx, emoji, x, y, size, blocked) {
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `${Math.floor(size)}px sans-serif`;
-  if (!blocked) {
-    ctx.lineWidth = Math.max(1.5, size * 0.08);
-    ctx.strokeStyle = 'rgba(255,255,255,0.78)';
-    ctx.strokeText(emoji, x, y + 1);
-  }
-  ctx.shadowColor = blocked ? 'rgba(255,255,255,0.18)' : 'rgba(15,23,42,0.18)';
-  ctx.shadowBlur = blocked ? 3 : 10;
-  ctx.shadowOffsetY = blocked ? 0 : Math.max(1, size * 0.035);
-  ctx.fillText(emoji, x, y + 1);
-  ctx.restore();
 }
 
 function drawFoodDisc(ctx, x, y, r, emoji, type, style, alpha) {
@@ -1211,31 +1493,21 @@ function drawFoodDisc(ctx, x, y, r, emoji, type, style, alpha) {
   const swatch = getFoodSwatch(type);
   ctx.save();
   ctx.globalAlpha = opacity;
-  const fill = ctx.createRadialGradient(x - r * 0.28, y - r * 0.34, r * 0.22, x, y, r * 1.18);
+  const fill = ctx.createRadialGradient(x - r * 0.18, y - r * 0.22, r * 0.12, x, y, r * 1.08);
   fill.addColorStop(0, '#ffffff');
-  fill.addColorStop(0.42, swatch.shell);
-  fill.addColorStop(0.72, swatch.mid);
-  fill.addColorStop(1, swatch.deep);
+  fill.addColorStop(1, swatch.surfaceBottom);
   ctx.fillStyle = fill;
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = swatch.edge;
+  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = swatch.border;
   ctx.stroke();
   ctx.beginPath();
-  ctx.fillStyle = 'rgba(255,255,255,0.14)';
-  ctx.moveTo(x, y - r * 0.98);
-  ctx.lineTo(x + r * 0.98, y);
-  ctx.lineTo(x, y + r * 0.98);
-  ctx.lineTo(x - r * 0.98, y);
-  ctx.closePath();
+  ctx.fillStyle = swatch.accentSoft;
+  ctx.ellipse(x, y + r * 0.05, r * 0.68, r * 0.58, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.beginPath();
-  ctx.fillStyle = 'rgba(255,255,255,0.82)';
-  ctx.arc(x - r * 0.28, y - r * 0.3, r * 0.2, 0, Math.PI * 2);
-  ctx.fill();
-  drawFoodEmoji(ctx, emoji, x, y, r * 1.2, false);
+  drawFoodEmoji(ctx, emoji, x, y + r * 0.06, r * 1.42, false);
   ctx.restore();
 }
 
@@ -1539,12 +1811,13 @@ function drawTileFlights(ctx, runtime, layout, now) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
-    drawFoodTileBlock(
+    drawCachedFoodTileBlock(
       ctx,
       { x: -g.tileSize / 2, y: -g.tileSize / 2, w: g.tileSize, h: g.tileSize },
       flight.tile.type,
       FOODS[flight.tile.type] || '🍩',
-      false
+      false,
+      runtime
     );
     ctx.restore();
   });
@@ -1998,7 +2271,7 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
     const tileRect = { x: pos.x, y: pos.y, w: g.tileSize, h: g.tileSize };
 
     ctx.save();
-    drawFoodTileBlock(ctx, tileRect, tile.type, FOODS[tile.type] || '🍩', blocked);
+    drawCachedFoodTileBlock(ctx, tileRect, tile.type, FOODS[tile.type] || '🍩', blocked, runtime);
 
     if (tile.powerUp) {
       const badgeMeta = getPowerUpBadge(tile.powerUp);
@@ -2027,6 +2300,12 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
 
   drawCard(ctx, g.dockRect, style, true);
   drawDockDecorations(ctx, g.dockRect);
+  const activeFlightDockIndices = new Set();
+  (runtime.tileFlights || []).forEach((flight) => {
+    if (getFlightProgress(flight, now) < 1) {
+      activeFlightDockIndices.add(flight.dockIndex);
+    }
+  });
   for (let i = 0; i < state.maxDockSize; i += 1) {
     const slotRect = getDockSlotRect(g.dockRect, state.maxDockSize, i);
     const tile = state.dock[i];
@@ -2038,11 +2317,9 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
     ctx.lineWidth = 1.2;
     ctx.strokeStyle = tile ? 'rgba(255,255,255,0.36)' : 'rgba(252,231,243,0.96)';
     ctx.stroke();
-    const isFlyingIntoSlot = (runtime.tileFlights || []).some((flight) => (
-      flight.dockIndex === i && getFlightProgress(flight, now) < 1
-    ));
+    const isFlyingIntoSlot = activeFlightDockIndices.has(i);
     if (tile && !isFlyingIntoSlot) {
-      drawFoodTileBlock(ctx, slotRect, tile.type, FOODS[tile.type] || '🍩', false);
+      drawCachedFoodTileBlock(ctx, slotRect, tile.type, FOODS[tile.type] || '🍩', false, runtime);
     }
   }
 
