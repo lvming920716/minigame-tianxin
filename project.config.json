@@ -9,7 +9,7 @@
         "es6": true,
         "enhance": false,
         "postcss": false,
-        "minified": false,
+        "minified": true,
         "urlCheck": false,
         "checkInvalidKey": true,
         "coverView": true,
@@ -22,7 +22,7 @@
         },
         "compileWorklet": false,
         "uglifyFileName": false,
-        "uploadWithSourceMap": true,
+        "uploadWithSourceMap": false,
         "packNpmManually": false,
         "minifyWXSS": true,
         "minifyWXML": true,
@@ -37,7 +37,36 @@
     "condition": {},
     "simulatorPluginLibVersion": {},
     "packOptions": {
-        "ignore": [],
+        "ignore": [
+            {
+                "type": "folder",
+                "value": "docs"
+            },
+            {
+                "type": "folder",
+                "value": "tools"
+            },
+            {
+                "type": "file",
+                "value": "README.md"
+            },
+            {
+                "type": "file",
+                "value": "CLAUDE.md"
+            },
+            {
+                "type": "file",
+                "value": "AGENTS.md"
+            },
+            {
+                "type": "file",
+                "value": "agent.md"
+            },
+            {
+                "type": "file",
+                "value": "package.json"
+            }
+        ],
         "include": []
     },
     "isGameTourist": false,

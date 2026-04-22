@@ -532,13 +532,13 @@ function drawTitle(ctx, layout, style, label) {
 
 const CHARACTER_POSTER_SWATCHES = {
   'peach-soda': { top: '#f8afcf', bottom: '#f59ac1', edge: '#ff8fb7' },
-  'cream-latte': { top: '#ecd2bf', bottom: '#ddb296', edge: '#d9b59d' },
+  'cream-latte': { top: '#f6d6df', bottom: '#d9b6c3', edge: '#efd0da' },
   'mint-breeze': { top: '#c4efe7', bottom: '#8bd8ca', edge: '#91d6ca' },
-  'berry-night': { top: '#ccb8f1', bottom: '#9a82d7', edge: '#b596ea' },
-  'apricot-sun': { top: '#ffdca6', bottom: '#ffc47a', edge: '#ffcf95' },
-  'ocean-star': { top: '#b8dcff', bottom: '#7db8f5', edge: '#9cccf9' },
+  'berry-night': { top: '#f0e6ff', bottom: '#d3b8f1', edge: '#e4d4fb' },
+  'apricot-sun': { top: '#ffd8e5', bottom: '#f4bfd1', edge: '#ffd0dd' },
+  'ocean-star': { top: '#f6e1bc', bottom: '#dcc18f', edge: '#ecd4ab' },
   'rose-cocoa': { top: '#f2c4d7', bottom: '#d78aa8', edge: '#eab2ca' },
-  'lemon-fizz': { top: '#e7f8b9', bottom: '#d4ea7a', edge: '#dff098' },
+  'lemon-fizz': { top: '#ffd9e5', bottom: '#f6b8cb', edge: '#ffc8d8' },
   'moon-iris': { top: '#e5d9ff', bottom: '#c8b3ff', edge: '#d8c6ff' },
 };
 
@@ -616,13 +616,13 @@ function drawGradientHeadline(ctx, text, x, y, maxWidth, startSize, leftColor, r
 function getCharacterCaption(character) {
   const captionMap = {
     'peach-soda': '适合喜欢元气感和舞台光泽的甜心形象。',
-    'cream-latte': '温柔奶霜气质，适合轻熟系甜心风格。',
+    'cream-latte': '轻纱与颈圈的脆弱纯欲感，更偏柔软轻熟的氛围。',
     'mint-breeze': '清爽薄荷感，像校园午后的轻盈微风。',
-    'berry-night': '冷艳莓果氛围，适合偏个性气场的你。',
-    'apricot-sun': '暖橘晴光调，治愈又有软糯少女感。',
-    'ocean-star': '海盐与天光的清冷感，更显轻透轮廓。',
+    'berry-night': '淡紫泳装与长发氛围，适合喜欢梦幻轻熟气质的你。',
+    'apricot-sun': '双马尾和公主裙的梦幻感更强，像童话里走出来的甜心公主。',
+    'ocean-star': '金发白领的利落感更突出，通勤气质里带一点轻熟精致。',
     'rose-cocoa': '玫瑰复古气质，带一点甜感和故事感。',
-    'lemon-fizz': '清新明亮的活力气场，像冒泡的汽水。',
+    'lemon-fizz': '甜辣网球感更明显，开朗运动里带一点轻熟魅力。',
     'moon-iris': '偏梦幻仙气的氛围，更柔和也更轻灵。',
   };
   return captionMap[character.id] || `${character.tagline} 的甜心形象。`;
@@ -2269,13 +2269,16 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
     const pos = tileToCanvas(tile, g.boardRect, g.tileSize, g.tileInset);
     const blocked = isBlocked(tile, state.tiles);
     const tileRect = { x: pos.x, y: pos.y, w: g.tileSize, h: g.tileSize };
+    const introPresentation = getGameIntroTilePresentation(runtime, tile, tileRect, now);
+    const drawRect = introPresentation.rect;
 
     ctx.save();
-    drawCachedFoodTileBlock(ctx, tileRect, tile.type, FOODS[tile.type] || '🍩', blocked, runtime);
+    ctx.globalAlpha = introPresentation.alpha;
+    drawCachedFoodTileBlock(ctx, drawRect, tile.type, FOODS[tile.type] || '🍩', blocked, runtime);
 
     if (tile.powerUp) {
       const badgeMeta = getPowerUpBadge(tile.powerUp);
-      const badge = { x: tileRect.x + tileRect.w - 14, y: tileRect.y - 6, w: 16, h: 16 };
+      const badge = { x: drawRect.x + drawRect.w - 14, y: drawRect.y - 6, w: 16, h: 16 };
       roundRect(ctx, badge.x, badge.y, badge.w, badge.h, 8);
       ctx.fillStyle = badgeMeta ? badgeMeta.fill : '#ff7e90';
       ctx.fill();
@@ -2462,6 +2465,126 @@ function drawScreenFlash(ctx, runtime, layout, style, now) {
   ctx.restore();
 }
 
+function getGameIntroTilePresentation(runtime, tile, rect, now) {
+  if (!runtime.gameIntro) {
+    return {
+      rect,
+      alpha: 1,
+    };
+  }
+
+  const intro = runtime.gameIntro;
+  const elapsed = Math.max(0, now - intro.start);
+  const duration = Math.max(1, intro.durationMs || 1100);
+  const t = clamp(elapsed / duration, 0, 1);
+  const rowBias = clamp((tile.y || 0) / 9, 0, 1);
+  const delay = 0.03 + rowBias * 0.12;
+  const travel = 0.22;
+  const progress = clamp((t - delay) / travel, 0, 1);
+  const eased = easeOutCubic(progress);
+  const lane = Math.round(tile.x || 0) % 3;
+  const startY = Math.min(-rect.h - 24, rect.y - 150 - lane * 18 - rowBias * 36);
+  const settleProgress = clamp((progress - 0.84) / 0.16, 0, 1);
+  const settleOffset = Math.sin(settleProgress * Math.PI) * 5 * (1 - settleProgress);
+  const y = startY + (rect.y - startY) * eased + settleOffset;
+
+  return {
+    rect: {
+      x: rect.x,
+      y,
+      w: rect.w,
+      h: rect.h,
+    },
+    alpha: clamp(progress * 1.25, 0, 1),
+  };
+}
+
+function drawGameIntroOverlay(ctx, runtime, layout, style, now) {
+  if (!runtime.gameIntro) return;
+  const intro = runtime.gameIntro;
+  const elapsed = now - intro.start;
+  const duration = intro.durationMs || 1100;
+  if (elapsed > duration) return;
+
+  const t = clamp(elapsed / duration, 0, 1);
+  const fadeIn = easeOutCubic(clamp(t / 0.18, 0, 1));
+  const hold = clamp((t - 0.14) / 0.52, 0, 1);
+  const fadeOut = easeOutCubic(clamp((t - 0.64) / 0.36, 0, 1));
+  const overlayAlpha = (1 - fadeOut) * 0.24;
+  const accentAlpha = clamp((fadeIn * 0.95) - (fadeOut * 0.72), 0, 0.9);
+  const titleScale = 0.72 + fadeIn * 0.38 - fadeOut * 0.08;
+  const titleY = layout.height * (0.46 - (1 - fadeIn) * 0.07 + fadeOut * 0.03);
+  const streakTravel = layout.width * 0.22 * (1 - hold);
+
+  ctx.save();
+  ctx.fillStyle = `rgba(20,16,34,${overlayAlpha.toFixed(3)})`;
+  ctx.fillRect(0, 0, layout.width, layout.height);
+
+  const flare = ctx.createRadialGradient(
+    layout.width * 0.5,
+    layout.height * 0.45,
+    10,
+    layout.width * 0.5,
+    layout.height * 0.45,
+    layout.width * 0.44
+  );
+  flare.addColorStop(0, `rgba(255,255,255,${(0.36 * accentAlpha).toFixed(3)})`);
+  flare.addColorStop(0.34, `rgba(251,113,133,${(0.18 * accentAlpha).toFixed(3)})`);
+  flare.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = flare;
+  ctx.fillRect(0, 0, layout.width, layout.height);
+
+  const streakY = titleY + 2;
+  const streakH = 70;
+  const leftStreakX = layout.width * 0.12 - streakTravel;
+  const rightStreakX = layout.width * 0.88 + streakTravel;
+  const leftStreak = ctx.createLinearGradient(leftStreakX, streakY, leftStreakX + 180, streakY);
+  leftStreak.addColorStop(0, 'rgba(255,255,255,0)');
+  leftStreak.addColorStop(0.62, `rgba(255,255,255,${(0.5 * accentAlpha).toFixed(3)})`);
+  leftStreak.addColorStop(1, `rgba(251,113,133,${(0.34 * accentAlpha).toFixed(3)})`);
+  ctx.fillStyle = leftStreak;
+  ctx.fillRect(leftStreakX, streakY - streakH / 2, 180, streakH);
+
+  const rightStreak = ctx.createLinearGradient(rightStreakX - 180, streakY, rightStreakX, streakY);
+  rightStreak.addColorStop(0, `rgba(251,113,133,${(0.34 * accentAlpha).toFixed(3)})`);
+  rightStreak.addColorStop(0.38, `rgba(255,255,255,${(0.5 * accentAlpha).toFixed(3)})`);
+  rightStreak.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = rightStreak;
+  ctx.fillRect(rightStreakX - 180, streakY - streakH / 2, 180, streakH);
+
+  ctx.save();
+  ctx.translate(layout.width / 2, titleY);
+  ctx.scale(titleScale, titleScale);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = `rgba(251,113,133,${(0.42 * accentAlpha).toFixed(3)})`;
+  ctx.shadowBlur = 28;
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = `rgba(255,255,255,${(0.88 * accentAlpha).toFixed(3)})`;
+  const titleFill = ctx.createLinearGradient(-160, -20, 160, 20);
+  titleFill.addColorStop(0, '#ffffff');
+  titleFill.addColorStop(0.46, '#fff1f5');
+  titleFill.addColorStop(1, '#ffd1df');
+  ctx.fillStyle = titleFill;
+  ctx.font = 'bold 44px sans-serif';
+  ctx.strokeText("LET'S GO!", 0, 0);
+  ctx.fillText("LET'S GO!", 0, 0);
+
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = `rgba(255,255,255,${(0.84 * accentAlpha).toFixed(3)})`;
+  ctx.shadowBlur = 12;
+  ctx.fillText('燃脂开局', 0, 38);
+  ctx.restore();
+
+  const sparkleAlpha = clamp(accentAlpha * (1 - fadeOut * 0.55), 0, 0.8);
+  const sparkleDrift = 16 * (1 - hold);
+  drawSparkle(ctx, layout.width * 0.23, titleY - 26 - sparkleDrift, 10, '#ffffff', sparkleAlpha);
+  drawSparkle(ctx, layout.width * 0.78, titleY - 10 + sparkleDrift * 0.4, 13, '#ffd6e7', sparkleAlpha * 0.92);
+  drawSparkle(ctx, layout.width * 0.68, titleY + 34 + sparkleDrift * 0.6, 8, '#ffffff', sparkleAlpha * 0.78);
+  drawSparkle(ctx, layout.width * 0.35, titleY + 24 - sparkleDrift * 0.4, 7, '#ffe4ee', sparkleAlpha * 0.7);
+  ctx.restore();
+}
+
 function drawReboundModal(ctx, runtime, layout, style, now) {
   if (!runtime.reboundModal) return;
   const modal = runtime.reboundModal;
@@ -2620,6 +2743,7 @@ function render(ctx, state, runtime) {
   drawSpecialOverlay(ctx, runtime, layout, style, now);
   drawLevelUpOverlay(ctx, runtime, layout, style, now);
   drawReboundModal(ctx, runtime, layout, style, now);
+  drawGameIntroOverlay(ctx, runtime, layout, style, now);
   drawToast(ctx, runtime, layout, style, now);
 
   runtime.hits = hits;

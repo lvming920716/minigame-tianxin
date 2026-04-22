@@ -44,15 +44,16 @@ def main() -> int:
     parser.add_argument(
         "targets",
         nargs="*",
-        default=[
-            "minigame/assets/audio/bgm-menu.wav",
-            "minigame/assets/audio/bgm-game.wav",
-        ],
+        default=[],
         help="WAV files to optimize in place.",
     )
     parser.add_argument("--sample-rate", type=int, default=11025, help="Target sample rate.")
     parser.add_argument("--sample-width", type=int, default=1, choices=[1, 2], help="Target sample width in bytes.")
     args = parser.parse_args()
+
+    if not args.targets:
+        print("No WAV targets provided. Skipping.")
+        return 0
 
     for raw_target in args.targets:
         path = Path(raw_target).resolve()

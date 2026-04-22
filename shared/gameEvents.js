@@ -2,6 +2,7 @@
 
 const GAME_AUDIO_EVENTS = {
   uiTransition: 'uiTransition',
+  gameIntro: 'gameIntro',
   tileBlocked: 'tileBlocked',
   tilePick: 'tilePick',
   tripleMatch: 'tripleMatch',

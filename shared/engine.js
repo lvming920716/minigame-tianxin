@@ -748,11 +748,12 @@ function update(state, action) {
     }
     case ACTIONS.START_GAME: {
       resetRunState(next, action.mode);
-      emitAudio(effects, GAME_AUDIO_EVENTS.uiTransition);
+      emitAudio(effects, GAME_AUDIO_EVENTS.gameIntro);
       return { state: next, effects };
     }
     case ACTIONS.RESTART: {
       resetRunState(next, next.gameMode);
+      emitAudio(effects, GAME_AUDIO_EVENTS.gameIntro);
       return { state: next, effects };
     }
     case ACTIONS.NEXT_LEVEL: {

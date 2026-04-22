@@ -188,6 +188,7 @@ function createRuntime(canvas) {
     lastTs: Date.now(),
     pauseUntil: 0,
     transition: null,
+    gameIntro: null,
     toast: null,
     blockedTapHintUntil: 0,
     screenFlash: null,
@@ -245,17 +246,39 @@ function dispatch(runtime, action) {
       start: Date.now(),
       durationMs: runtime.style.motion.pageMs,
     };
+    if (runtime.state.page === 'GAME') {
+      runtime.gameIntro = {
+        start: Date.now(),
+        durationMs: runtime.style.motion.gameIntroMs || 1100,
+      };
+      runtime.pauseUntil = Math.max(
+        runtime.pauseUntil || 0,
+        runtime.gameIntro.start + Math.max(520, runtime.gameIntro.durationMs * 0.82)
+      );
+    } else {
+      runtime.gameIntro = null;
+    }
   }
   applyEffects(runtime, result.effects);
   syncSceneAudio(runtime);
 }
 
-function resolveBgmScene(page) {
-  return page === 'GAME' ? 'game' : 'menu';
+function resolveBgmScene(state) {
+  if (!state) return 'characterSelect';
+  if (state.page === 'GAME') {
+    if (state.slash && state.slash.active) return 'slash';
+    return 'game';
+  }
+  if (state.page === 'RESULT') {
+    return state.success ? 'resultSuccess' : 'resultFail';
+  }
+  if (state.page === 'HOME') return 'home';
+  if (state.page === 'INPUT') return 'input';
+  return 'characterSelect';
 }
 
 function syncSceneAudio(runtime) {
-  syncBgm(resolveBgmScene(runtime.state.page));
+  syncBgm(resolveBgmScene(runtime.state));
 }
 
 function showToast(runtime, text, durationMs) {
@@ -365,6 +388,9 @@ function applyEffects(runtime, effects) {
 }
 
 function updateTransientEffects(runtime, now) {
+  if (runtime.gameIntro && now > runtime.gameIntro.start + runtime.gameIntro.durationMs) {
+    runtime.gameIntro = null;
+  }
   if (runtime.toast && runtime.toast.until < now) {
     runtime.toast = null;
   }
