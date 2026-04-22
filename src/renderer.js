@@ -93,6 +93,46 @@ function drawButton(ctx, rect, text, style, variant) {
   ctx.restore();
 }
 
+function drawTopNavIconButton(ctx, rect, style) {
+  ctx.save();
+  ctx.shadowColor = 'rgba(148,163,184,0.16)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, Math.min(rect.w, rect.h) / 2);
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = 1.1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.stroke();
+
+  ctx.strokeStyle = style.palette.textPrimary;
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const centerY = rect.y + rect.h / 2;
+  const arrowLeft = rect.x + 13;
+  const arrowMid = rect.x + 21;
+  const arrowRight = rect.x + 29;
+
+  ctx.beginPath();
+  ctx.moveTo(arrowRight, centerY - 8);
+  ctx.lineTo(arrowMid, centerY);
+  ctx.lineTo(arrowRight, centerY + 8);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(arrowMid, centerY);
+  ctx.lineTo(arrowLeft, centerY);
+  ctx.stroke();
+
+  ctx.fillStyle = style.palette.accentStrong;
+  ctx.beginPath();
+  ctx.arc(rect.x + rect.w - 10, rect.y + 10, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawButtonBadge(ctx, rect, text, fill, textColor) {
   const badge = {
     x: rect.x - 4,
@@ -296,15 +336,19 @@ function drawAvatarBackdrop(ctx, rect, palette) {
   ctx.restore();
 }
 
+function getAvatarScaleX(state) {
+  const journey = getJourneyContext(state);
+  const startScaleX = 1 + journey.journeyProfile.avatarScaleBoost;
+  const endScaleX = 0.76;
+  return clamp(startScaleX + (endScaleX - startScaleX) * (journey.progress / 100), 0.76, 1.1);
+}
+
 function drawAvatar(ctx, runtime, state, rect, options) {
   const character = getCharacterById(state.selectedCharacterId);
   const path = character.stageAssetPaths[state.slimmingStage] || character.stageAssetPaths[1];
   const image = runtime.images[path];
   const palette = getCharacterPosterPalette(character.id);
-  const journey = getJourneyContext(state);
-  const startScaleX = 1 + journey.journeyProfile.avatarScaleBoost;
-  const endScaleX = 0.76;
-  const scaleX = clamp(startScaleX + (endScaleX - startScaleX) * (journey.progress / 100), 0.76, 1.1);
+  const scaleX = getAvatarScaleX(state);
   const opts = options || {};
   const radius = typeof opts.radius === 'number' ? opts.radius : 26;
   const frame = opts.frame !== false;
@@ -334,6 +378,119 @@ function drawAvatar(ctx, runtime, state, rect, options) {
     ctx.textBaseline = 'middle';
     ctx.font = 'bold 20px sans-serif';
     ctx.fillText(character.name, rect.x + rect.w / 2, rect.y + rect.h / 2);
+  }
+  ctx.restore();
+
+  if (frame) {
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawGameAvatarMorph(ctx, runtime, state, rect, style, now, options) {
+  const morph = runtime.avatarMorph;
+  if (!morph || morph.characterId !== state.selectedCharacterId) {
+    drawAvatar(ctx, runtime, state, rect, options);
+    return;
+  }
+
+  const opts = options || {};
+  const radius = typeof opts.radius === 'number' ? opts.radius : 26;
+  const frame = opts.frame !== false;
+  const background = opts.background !== false;
+  const fillMode = opts.mode || 'contain';
+  const padding = typeof opts.padding === 'number' ? opts.padding : 0;
+  const alignX = typeof opts.alignX === 'number' ? opts.alignX : 0.5;
+  const alignY = typeof opts.alignY === 'number' ? opts.alignY : 0.5;
+  const character = getCharacterById(state.selectedCharacterId);
+  const palette = getCharacterPosterPalette(character.id);
+  const scaleX = getAvatarScaleX(state);
+  const elapsed = Math.max(0, now - morph.start);
+  const duration = Math.max(1, morph.durationMs || 760);
+  const t = clamp(elapsed / duration, 0, 1);
+  const fromImage = runtime.images[character.stageAssetPaths[morph.fromStage]];
+  const toImage = runtime.images[character.stageAssetPaths[morph.toStage]] || runtime.images[character.stageAssetPaths[state.slimmingStage]];
+  const oldAlpha = 1 - easeOutCubic(clamp((t - 0.02) / 0.5, 0, 1));
+  const newAlpha = easeOutCubic(clamp((t - 0.16) / 0.46, 0, 1));
+  const flashAlpha = Math.sin(Math.PI * clamp((t - 0.08) / 0.54, 0, 1)) * 0.34;
+  const sweepProgress = easeOutCubic(clamp((t - 0.04) / 0.62, 0, 1));
+  const sweepWidth = rect.w * 0.72;
+  const sweepX = rect.x - sweepWidth + (rect.w + sweepWidth * 2) * sweepProgress;
+  const flareAlpha = Math.max(0, 0.3 - t * 0.18);
+
+  ctx.save();
+  roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  ctx.clip();
+  if (background) {
+    drawAvatarBackdrop(ctx, rect, palette);
+  }
+
+  if (fromImage && oldAlpha > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = oldAlpha;
+    drawFittedImage(ctx, fromImage, rect, {
+      mode: fillMode,
+      padding,
+      alignX,
+      alignY,
+      scaleX,
+    });
+    ctx.restore();
+  }
+
+  if (toImage && newAlpha > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = newAlpha;
+    drawFittedImage(ctx, toImage, rect, {
+      mode: fillMode,
+      padding,
+      alignX,
+      alignY,
+      scaleX,
+    });
+    ctx.restore();
+  }
+
+  if (!fromImage && !toImage) {
+    ctx.fillStyle = '#fdd7e8';
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  }
+
+  if (flashAlpha > 0.01) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = `rgba(255,255,255,${flashAlpha.toFixed(3)})`;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.restore();
+  }
+
+  const sweep = ctx.createLinearGradient(sweepX - sweepWidth / 2, rect.y, sweepX + sweepWidth / 2, rect.y);
+  sweep.addColorStop(0, 'rgba(255,255,255,0)');
+  sweep.addColorStop(0.38, `rgba(255,255,255,${(0.16 + flashAlpha * 0.4).toFixed(3)})`);
+  sweep.addColorStop(0.5, `rgba(255,255,255,${(0.82 + flashAlpha * 0.35).toFixed(3)})`);
+  sweep.addColorStop(0.62, `rgba(255,245,250,${(0.26 + flashAlpha * 0.3).toFixed(3)})`);
+  sweep.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.fillStyle = sweep;
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  ctx.restore();
+
+  if (flareAlpha > 0.01) {
+    drawOrb(
+      ctx,
+      rect.x + rect.w * 0.5,
+      rect.y + rect.h * 0.34,
+      Math.max(60, rect.w * 0.82),
+      `rgba(255,255,255,${flareAlpha.toFixed(3)})`
+    );
+    drawSparkle(ctx, rect.x + rect.w * 0.28, rect.y + rect.h * 0.22, 6, '#ffffff', flareAlpha * 1.2);
+    drawSparkle(ctx, rect.x + rect.w * 0.76, rect.y + rect.h * 0.36, 8, '#ffe3ef', flareAlpha);
+    drawSparkle(ctx, rect.x + rect.w * 0.64, rect.y + rect.h * 0.14, 5, '#ffffff', flareAlpha * 0.88);
   }
   ctx.restore();
 
@@ -630,7 +787,7 @@ function getCharacterCaption(character) {
 
 function drawCharacterPosterCard(ctx, runtime, character, rect, style, selected) {
   const palette = getCharacterPosterPalette(character.id);
-  const image = runtime.images[character.stageAssetPaths[2]];
+  const image = runtime.images[character.stageAssetPaths[1]];
   const artRect = {
     x: rect.x + 2,
     y: rect.y + 2,
@@ -1942,6 +2099,15 @@ function drawHomePage(ctx, state, runtime, layout, style, hits) {
   const compact = layout.width <= 360 || layout.height <= 700;
   drawTitle(ctx, layout, style, '准备开局');
 
+  const backRect = {
+    x: layout.sidePad,
+    y: layout.topPad + 2,
+    w: 40,
+    h: 40,
+  };
+  drawTopNavIconButton(ctx, backRect, style);
+  addHit(hits, 'go_character_select', 'go_character_select', backRect);
+
   const startBtn = getBottomActionRect(layout, compact ? 50 : 54, compact ? 8 : 12);
   startBtn.x += compact ? 8 : 6;
   startBtn.w -= (compact ? 16 : 12);
@@ -2211,7 +2377,7 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
     style.palette.orbRose
   );
   ctx.restore();
-  drawAvatar(ctx, runtime, state, g.heroRect, {
+  drawGameAvatarMorph(ctx, runtime, state, g.heroRect, style, now, {
     frame: false,
     background: true,
     mode: 'cover',

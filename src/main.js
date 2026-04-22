@@ -4,6 +4,7 @@ const { ACTIONS, createInitialState, update } = require('../shared/engine');
 const { validateWeightInputs } = require('../shared/setupValidation');
 const { FOODS, isBlocked } = require('../shared/tileMatchLogic');
 const { CHARACTER_OPTIONS } = require('../shared/characters');
+const { GAME_AUDIO_EVENTS } = require('../shared/gameEvents');
 const {
   SWEET_SLASH_BASE_DURATION_MS,
   SWEET_SLASH_MAX_DURATION_MS,
@@ -189,6 +190,7 @@ function createRuntime(canvas) {
     pauseUntil: 0,
     transition: null,
     gameIntro: null,
+    avatarMorph: null,
     toast: null,
     blockedTapHintUntil: 0,
     screenFlash: null,
@@ -237,6 +239,8 @@ function preloadAssets(runtime) {
 
 function dispatch(runtime, action) {
   const prevPage = runtime.state.page;
+  const prevSlimmingStage = runtime.state.slimmingStage;
+  const prevCharacterId = runtime.state.selectedCharacterId;
   const result = update(runtime.state, action);
   runtime.state = result.state;
   if (runtime.state.page !== prevPage) {
@@ -258,6 +262,23 @@ function dispatch(runtime, action) {
     } else {
       runtime.gameIntro = null;
     }
+  }
+  if (
+    prevPage === 'GAME' &&
+    runtime.state.page === 'GAME' &&
+    prevCharacterId === runtime.state.selectedCharacterId &&
+    runtime.state.slimmingStage !== prevSlimmingStage
+  ) {
+    runtime.avatarMorph = {
+      start: Date.now(),
+      durationMs: runtime.style.motion.avatarMorphMs || 760,
+      fromStage: prevSlimmingStage,
+      toStage: runtime.state.slimmingStage,
+      characterId: runtime.state.selectedCharacterId,
+    };
+    playEvent(GAME_AUDIO_EVENTS.avatarMorph);
+  } else if (runtime.state.page !== 'GAME') {
+    runtime.avatarMorph = null;
   }
   applyEffects(runtime, result.effects);
   syncSceneAudio(runtime);
@@ -390,6 +411,9 @@ function applyEffects(runtime, effects) {
 function updateTransientEffects(runtime, now) {
   if (runtime.gameIntro && now > runtime.gameIntro.start + runtime.gameIntro.durationMs) {
     runtime.gameIntro = null;
+  }
+  if (runtime.avatarMorph && now > runtime.avatarMorph.start + runtime.avatarMorph.durationMs) {
+    runtime.avatarMorph = null;
   }
   if (runtime.toast && runtime.toast.until < now) {
     runtime.toast = null;
@@ -676,6 +700,11 @@ function handleTap(runtime, x, y) {
     return;
   }
 
+  if (hit.kind === 'go_character_select') {
+    dispatch(runtime, { type: ACTIONS.GO_PAGE, page: 'CHARACTER_SELECT', now: Date.now() });
+    return;
+  }
+
   if (hit.kind === 'set_mode') {
     runtime.state.gameMode = hit.id;
     return;
@@ -801,6 +830,7 @@ function boot() {
     const runtime = createRuntime(canvas);
     preloadAssets(runtime);
     bindTouch(runtime);
+    unlockAudio();
     syncSceneAudio(runtime);
 
     wx.onHide(() => {
@@ -808,6 +838,7 @@ function boot() {
     });
 
     wx.onShow(() => {
+      unlockAudio();
       resumeAudio();
       syncSceneAudio(runtime);
     });

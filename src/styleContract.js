@@ -39,6 +39,7 @@ const STYLE_CONTRACT = {
   motion: {
     pageMs: 280,
     gameIntroMs: 1100,
+    avatarMorphMs: 760,
     toastMs: 1900,
     flashMs: 2200,
     reboundMs: 2600,

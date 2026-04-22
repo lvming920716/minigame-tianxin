@@ -13,6 +13,10 @@ const AUDIO_SFX_MAP = {
     volume: 0.9,
     holdBgmScene: 'game',
   },
+  [GAME_AUDIO_EVENTS.avatarMorph]: {
+    src: 'assets/audio/avatar-morph.wav',
+    volume: 0.82,
+  },
   [GAME_AUDIO_EVENTS.tileBlocked]: 'assets/audio/pop.wav',
   [GAME_AUDIO_EVENTS.tilePick]: 'assets/audio/pick.wav',
   [GAME_AUDIO_EVENTS.tripleMatch]: 'assets/audio/bubble-pop.wav',

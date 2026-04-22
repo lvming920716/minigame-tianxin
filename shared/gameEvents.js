@@ -3,6 +3,7 @@
 const GAME_AUDIO_EVENTS = {
   uiTransition: 'uiTransition',
   gameIntro: 'gameIntro',
+  avatarMorph: 'avatarMorph',
   tileBlocked: 'tileBlocked',
   tilePick: 'tilePick',
   tripleMatch: 'tripleMatch',
