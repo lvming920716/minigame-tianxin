@@ -4,6 +4,7 @@ const { ACTIONS, createInitialState, update } = require('../shared/engine');
 const { validateWeightInputs } = require('../shared/setupValidation');
 const { FOODS, isBlocked } = require('../shared/tileMatchLogic');
 const { CHARACTER_OPTIONS } = require('../shared/characters');
+const { getRelativeStageMeta } = require('../shared/bodyStage');
 const { GAME_AUDIO_EVENTS } = require('../shared/gameEvents');
 const {
   SWEET_SLASH_BASE_DURATION_MS,
@@ -137,6 +138,70 @@ function clampWeight(value) {
   return Math.max(30, Math.min(300, value));
 }
 
+function sanitizeWeightInput(value) {
+  return String(value == null ? '' : value).replace(/[^\d]/g, '').slice(0, 3);
+}
+
+function getFieldWeightValue(state, field) {
+  return field === 'target' ? state.targetWeight : state.initialWeight;
+}
+
+function closeWeightKeyboard(runtime) {
+  if (!runtime || !runtime.weightKeyboard || !runtime.weightKeyboard.activeField) return;
+  runtime.weightKeyboard.activeField = null;
+  runtime.weightKeyboard.draft = '';
+  if (typeof wx !== 'undefined' && typeof wx.hideKeyboard === 'function') {
+    try {
+      wx.hideKeyboard({});
+    } catch (_) {
+      // no-op
+    }
+  }
+}
+
+function applyWeightFieldValue(runtime, field, rawValue) {
+  const normalized = sanitizeWeightInput(rawValue);
+  if (!normalized) {
+    showToast(runtime, '请输入 30 到 300 的体重', 1600);
+    return false;
+  }
+
+  const nextValue = clampWeight(Number(normalized));
+  runtime.weightKeyboard.draft = String(nextValue);
+  dispatch(runtime, {
+    type: ACTIONS.SET_WEIGHTS,
+    initialWeight: field === 'initial' ? nextValue : runtime.state.initialWeight,
+    targetWeight: field === 'target' ? nextValue : runtime.state.targetWeight,
+    now: Date.now(),
+  });
+  return true;
+}
+
+function openWeightKeyboard(runtime, field) {
+  if (!runtime || !runtime.weightKeyboard) return;
+
+  runtime.weightKeyboard.activeField = field;
+  runtime.weightKeyboard.draft = String(Math.round(getFieldWeightValue(runtime.state, field)));
+
+  if (typeof wx === 'undefined' || typeof wx.showKeyboard !== 'function') {
+    showToast(runtime, '当前环境暂不支持键盘输入，请用加减按钮调整', 1800);
+    return;
+  }
+
+  try {
+    wx.showKeyboard({
+      defaultValue: runtime.weightKeyboard.draft,
+      maxLength: 3,
+      multiple: false,
+      confirmHold: false,
+      confirmType: 'done',
+      inputType: 'number',
+    });
+  } catch (_) {
+    showToast(runtime, '键盘打开失败，请先用加减按钮调整', 1800);
+  }
+}
+
 function distancePointToSegment(px, py, ax, ay, bx, by) {
   const dx = bx - ax;
   const dy = by - ay;
@@ -191,6 +256,8 @@ function createRuntime(canvas) {
     transition: null,
     gameIntro: null,
     avatarMorph: null,
+    dockOverflowBurst: null,
+    pendingResultState: null,
     toast: null,
     blockedTapHintUntil: 0,
     screenFlash: null,
@@ -215,6 +282,10 @@ function createRuntime(canvas) {
       displayScore: 0,
       scorePulseUntil: 0,
       virtualSerial: 0,
+    },
+    weightKeyboard: {
+      activeField: null,
+      draft: '',
     },
     style: STYLE_CONTRACT,
   };
@@ -242,25 +313,47 @@ function dispatch(runtime, action) {
   const prevSlimmingStage = runtime.state.slimmingStage;
   const prevCharacterId = runtime.state.selectedCharacterId;
   const result = update(runtime.state, action);
-  runtime.state = result.state;
-  if (runtime.state.page !== prevPage) {
-    runtime.transition = {
-      from: prevPage,
-      to: runtime.state.page,
-      start: Date.now(),
-      durationMs: runtime.style.motion.pageMs,
+  const shouldStageDockOverflowResult =
+    prevPage === 'GAME' &&
+    result.state.page === 'RESULT' &&
+    !result.state.success &&
+    result.state.resultReason === '甜心盘满了';
+
+  if (shouldStageDockOverflowResult) {
+    runtime.pendingResultState = result.state;
+    runtime.state = {
+      ...result.state,
+      page: 'GAME',
     };
-    if (runtime.state.page === 'GAME') {
-      runtime.gameIntro = {
+    runtime.dockOverflowBurst = {
+      start: Date.now(),
+      durationMs: runtime.style.motion.dockOverflowMs || 980,
+    };
+    runtime.pauseUntil = Math.max(
+      runtime.pauseUntil || 0,
+      runtime.dockOverflowBurst.start + runtime.dockOverflowBurst.durationMs
+    );
+  } else {
+    runtime.state = result.state;
+    if (runtime.state.page !== prevPage) {
+      runtime.transition = {
+        from: prevPage,
+        to: runtime.state.page,
         start: Date.now(),
-        durationMs: runtime.style.motion.gameIntroMs || 1100,
+        durationMs: runtime.style.motion.pageMs,
       };
-      runtime.pauseUntil = Math.max(
-        runtime.pauseUntil || 0,
-        runtime.gameIntro.start + Math.max(520, runtime.gameIntro.durationMs * 0.82)
-      );
-    } else {
-      runtime.gameIntro = null;
+      if (runtime.state.page === 'GAME') {
+        runtime.gameIntro = {
+          start: Date.now(),
+          durationMs: runtime.style.motion.gameIntroMs || 1100,
+        };
+        runtime.pauseUntil = Math.max(
+          runtime.pauseUntil || 0,
+          runtime.gameIntro.start + Math.max(520, runtime.gameIntro.durationMs * 0.82)
+        );
+      } else {
+        runtime.gameIntro = null;
+      }
     }
   }
   if (
@@ -269,12 +362,15 @@ function dispatch(runtime, action) {
     prevCharacterId === runtime.state.selectedCharacterId &&
     runtime.state.slimmingStage !== prevSlimmingStage
   ) {
+    const stageMeta = getRelativeStageMeta(runtime.state.slimmingStage);
     runtime.avatarMorph = {
       start: Date.now(),
       durationMs: runtime.style.motion.avatarMorphMs || 760,
       fromStage: prevSlimmingStage,
       toStage: runtime.state.slimmingStage,
       characterId: runtime.state.selectedCharacterId,
+      stageLabel: `进入${stageMeta.label}`,
+      stageHint: stageMeta.hint,
     };
     playEvent(GAME_AUDIO_EVENTS.avatarMorph);
   } else if (runtime.state.page !== 'GAME') {
@@ -282,6 +378,9 @@ function dispatch(runtime, action) {
   }
   applyEffects(runtime, result.effects);
   syncSceneAudio(runtime);
+  if (runtime.state.page !== 'INPUT') {
+    closeWeightKeyboard(runtime);
+  }
 }
 
 function resolveBgmScene(state) {
@@ -415,6 +514,9 @@ function updateTransientEffects(runtime, now) {
   if (runtime.avatarMorph && now > runtime.avatarMorph.start + runtime.avatarMorph.durationMs) {
     runtime.avatarMorph = null;
   }
+  if (runtime.dockOverflowBurst && now > runtime.dockOverflowBurst.start + runtime.dockOverflowBurst.durationMs) {
+    runtime.dockOverflowBurst = null;
+  }
   if (runtime.toast && runtime.toast.until < now) {
     runtime.toast = null;
   }
@@ -437,6 +539,23 @@ function updateTransientEffects(runtime, now) {
   if (runtime.transition && now > runtime.transition.start + runtime.transition.durationMs) {
     runtime.transition = null;
   }
+}
+
+function settlePendingResultState(runtime, now) {
+  if (!runtime.pendingResultState) return;
+  if (runtime.dockOverflowBurst) return;
+
+  const prevPage = runtime.state.page;
+  runtime.state = runtime.pendingResultState;
+  runtime.pendingResultState = null;
+  runtime.transition = {
+    from: prevPage,
+    to: runtime.state.page,
+    start: now,
+    durationMs: runtime.style.motion.pageMs,
+  };
+  runtime.gameIntro = null;
+  syncSceneAudio(runtime);
 }
 
 function spawnSlashEntity(runtime) {
@@ -634,6 +753,14 @@ function toCanvasTouch(touch) {
 function handleTap(runtime, x, y) {
   const hit = findHit(runtime, x, y);
   if (!hit) return;
+  if (
+    runtime.weightKeyboard &&
+    runtime.weightKeyboard.activeField &&
+    hit.kind !== 'edit_initial' &&
+    hit.kind !== 'edit_target'
+  ) {
+    closeWeightKeyboard(runtime);
+  }
 
   if (hit.kind === 'character') {
     dispatch(runtime, { type: ACTIONS.SELECT_CHARACTER, characterId: hit.id, now: Date.now() });
@@ -682,6 +809,16 @@ function handleTap(runtime, x, y) {
       targetWeight: clampWeight(runtime.state.targetWeight + 1),
       now: Date.now(),
     });
+    return;
+  }
+
+  if (hit.kind === 'edit_initial') {
+    openWeightKeyboard(runtime, 'initial');
+    return;
+  }
+
+  if (hit.kind === 'edit_target') {
+    openWeightKeyboard(runtime, 'target');
     return;
   }
 
@@ -741,12 +878,8 @@ function handleTap(runtime, x, y) {
   }
 
   if (hit.kind === 'finish_game') {
-    runtime.state.page = 'RESULT';
-    runtime.state.runFinished = true;
-    runtime.state.success = false;
-    runtime.state.resultReason = '主动结束';
+    dispatch(runtime, { type: ACTIONS.END_RUN, now: Date.now() });
     showToast(runtime, '已结束本局', 1200);
-    syncSceneAudio(runtime);
     return;
   }
 
@@ -793,6 +926,32 @@ function bindTouch(runtime) {
   });
 }
 
+function bindKeyboard(runtime) {
+  if (typeof wx === 'undefined') return;
+
+  if (typeof wx.onKeyboardInput === 'function') {
+    wx.onKeyboardInput((event) => {
+      if (!runtime.weightKeyboard || !runtime.weightKeyboard.activeField) return;
+      runtime.weightKeyboard.draft = sanitizeWeightInput(event && event.value);
+    });
+  }
+
+  const finishKeyboardInput = (event) => {
+    if (!runtime.weightKeyboard || !runtime.weightKeyboard.activeField) return;
+    const field = runtime.weightKeyboard.activeField;
+    applyWeightFieldValue(runtime, field, event && event.value);
+    closeWeightKeyboard(runtime);
+  };
+
+  if (typeof wx.onKeyboardConfirm === 'function') {
+    wx.onKeyboardConfirm(finishKeyboardInput);
+  }
+
+  if (typeof wx.onKeyboardComplete === 'function') {
+    wx.onKeyboardComplete(finishKeyboardInput);
+  }
+}
+
 function gameLoop(runtime) {
   const now = Date.now();
   const delta = Math.min(120, now - runtime.lastTs);
@@ -811,6 +970,7 @@ function gameLoop(runtime) {
     updateSlash(runtime, delta);
   }
   updateTransientEffects(runtime, now);
+  settlePendingResultState(runtime, now);
 
   render(runtime.ctx, runtime.state, runtime);
 
@@ -830,10 +990,12 @@ function boot() {
     const runtime = createRuntime(canvas);
     preloadAssets(runtime);
     bindTouch(runtime);
+    bindKeyboard(runtime);
     unlockAudio();
     syncSceneAudio(runtime);
 
     wx.onHide(() => {
+      closeWeightKeyboard(runtime);
       pauseAudio();
     });
 

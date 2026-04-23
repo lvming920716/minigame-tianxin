@@ -54,6 +54,7 @@ const ACTIONS = {
   ENTER_SLASH: 'ENTER_SLASH',
   SLASH_HIT: 'SLASH_HIT',
   END_SLASH: 'END_SLASH',
+  END_RUN: 'END_RUN',
   NEXT_LEVEL: 'NEXT_LEVEL',
   RESTART: 'RESTART',
 };
@@ -349,6 +350,25 @@ function resetLevelState(state) {
   state.slashSameTypeStreak = 0;
 }
 
+function finishSuccess(state, effects) {
+  state.page = 'RESULT';
+  state.runFinished = true;
+  state.success = true;
+  state.resultReason = '减肥成功';
+  state.currentWeight = Math.min(state.currentWeight, state.targetWeight);
+  emitAudio(effects, GAME_AUDIO_EVENTS.goalReached);
+  emitFlash(effects, '减肥成功', 'gold');
+  emitToast(effects, '体重进度已达 100%');
+  emitPause(effects, 720);
+}
+
+function finishSuccessIfGoalReached(state, effects) {
+  if (state.runFinished) return true;
+  if (state.currentWeight > state.targetWeight) return false;
+  finishSuccess(state, effects);
+  return true;
+}
+
 function resetRunState(state, mode) {
   const stage = getBodyStageForWeight(state.initialWeight, state.initialWeight, state.targetWeight).stage;
   state.page = 'GAME';
@@ -379,6 +399,10 @@ function resetRunState(state, mode) {
 }
 
 function resolveBoardOutcome(state, triggeredRebound, effects) {
+  if (finishSuccessIfGoalReached(state, effects)) {
+    return;
+  }
+
   const outcome = getLevelOutcome({
     remainingBoardCount: boardCount(state),
     triggeredRebound: !!triggeredRebound,
@@ -400,11 +424,7 @@ function resolveBoardOutcome(state, triggeredRebound, effects) {
   }
 
   if (outcome === 'RESULT') {
-    state.page = 'RESULT';
-    state.runFinished = true;
-    state.success = true;
-    state.resultReason = '目标达成';
-    emitAudio(effects, GAME_AUDIO_EVENTS.goalReached);
+    finishSuccess(state, effects);
   }
 }
 
@@ -519,17 +539,24 @@ function selectMatchType(dock) {
 
 function tryTriggerRebound(state, action, effects) {
   if (state.level < 2) return false;
+  if (state.slimmingStage <= 1) return false;
   if (boardCount(state) <= 0) return false;
 
   const maxRebounds = getMaxReboundsThisLevel(state.level);
   if (state.reboundsThisLevel >= maxRebounds) return false;
-  if (randomFrom(action) >= getReboundProbability(state.level)) return false;
+  if (randomFrom(action) >= getReboundProbability(state.level, state.slimmingStage)) return false;
 
   const reboundOrdinal = state.reboundsThisLevel + 1;
   const reboundTiles = generateReboundTiles(state.tiles, state.level, reboundOrdinal);
   const oldWeight = state.currentWeight;
-  const totalWeightToLose = Math.max(0.1, state.initialWeight - state.targetWeight);
-  const gain = getReboundWeightGain(totalWeightToLose, state.totalLevels, randomFrom(action) * 0.5 + 0.5);
+  const gain = getReboundWeightGain(
+    state.initialWeight,
+    state.currentWeight,
+    state.targetWeight,
+    state.totalLevels,
+    state.slimmingStage,
+    randomFrom(action) * 0.5 + 0.5
+  );
 
   state.reboundsThisLevel = reboundOrdinal;
   state.tiles = state.tiles.concat(reboundTiles);
@@ -661,6 +688,10 @@ function handleTripleMatch(state, action, effects, matchType, now) {
       newWeight: state.currentWeight,
       durationMs: SPECIAL_EFFECT_DURATION_MS,
     });
+  }
+
+  if (finishSuccessIfGoalReached(state, effects)) {
+    return false;
   }
 
   matchedTiles.forEach((tile) => {
@@ -881,7 +912,20 @@ function update(state, action) {
         newWeight: next.currentWeight,
         durationMs: SPECIAL_EFFECT_DURATION_MS,
       });
+      if (finishSuccessIfGoalReached(next, effects)) {
+        return { state: next, effects };
+      }
       resolveBoardOutcome(next, false, effects);
+      return { state: next, effects };
+    }
+    case ACTIONS.END_RUN: {
+      if (next.page !== 'GAME' || next.runFinished || next.slash.active) {
+        return { state: next, effects };
+      }
+      next.page = 'RESULT';
+      next.runFinished = true;
+      next.success = false;
+      next.resultReason = '主动结束';
       return { state: next, effects };
     }
     default:

@@ -414,15 +414,84 @@ function drawGameAvatarMorph(ctx, runtime, state, rect, style, now, options) {
   const t = clamp(elapsed / duration, 0, 1);
   const fromImage = runtime.images[character.stageAssetPaths[morph.fromStage]];
   const toImage = runtime.images[character.stageAssetPaths[morph.toStage]] || runtime.images[character.stageAssetPaths[state.slimmingStage]];
-  const oldAlpha = 1 - easeOutCubic(clamp((t - 0.02) / 0.5, 0, 1));
-  const newAlpha = easeOutCubic(clamp((t - 0.16) / 0.46, 0, 1));
-  const flashAlpha = Math.sin(Math.PI * clamp((t - 0.08) / 0.54, 0, 1)) * 0.34;
-  const sweepProgress = easeOutCubic(clamp((t - 0.04) / 0.62, 0, 1));
-  const sweepWidth = rect.w * 0.72;
-  const sweepX = rect.x - sweepWidth + (rect.w + sweepWidth * 2) * sweepProgress;
-  const flareAlpha = Math.max(0, 0.3 - t * 0.18);
+  const charge = easeOutCubic(clamp(t / 0.42, 0, 1));
+  const burst = Math.sin(Math.PI * clamp((t - 0.24) / 0.34, 0, 1));
+  const settle = easeOutCubic(clamp((t - 0.58) / 0.42, 0, 1));
+  const oldAlpha = 1 - easeOutCubic(clamp((t - 0.14) / 0.34, 0, 1));
+  const newAlpha = clamp(easeOutBack(clamp((t - 0.34) / 0.42, 0, 1)), 0, 1);
+  const jitter = Math.sin(now / 26) * 1.8 * (1 - settle) * charge;
+  const pulseScale = 1 + charge * 0.035 + burst * 0.028 - settle * 0.02;
+  const coreFlash = Math.max(0, burst) * 0.34 + (1 - settle) * 0.04;
+  const stageLabelAlpha = clamp((t - 0.46) / 0.22, 0, 1) * (1 - clamp((t - 0.94) / 0.06, 0, 1) * 0.35);
+  const stageHintAlpha = clamp((t - 0.56) / 0.22, 0, 1) * 0.84;
+  const auraRadius = rect.w * (0.66 + charge * 0.3 + Math.max(0, burst) * 0.18);
+  const heroCenterX = rect.x + rect.w / 2;
+  const heroCenterY = rect.y + rect.h * 0.48;
+  const chargeGlow = 0.18 + charge * 0.32 + Math.max(0, burst) * 0.12;
+  const goldAura = `rgba(246,191,73,${chargeGlow.toFixed(3)})`;
+  const pinkAura = `rgba(244,114,182,${(0.12 + charge * 0.16).toFixed(3)})`;
+  const whiteAura = `rgba(255,255,255,${(0.16 + Math.max(0, burst) * 0.3).toFixed(3)})`;
+  const sweepProgress = easeOutCubic(clamp((t - 0.28) / 0.36, 0, 1));
+  const sweepWidth = rect.w * 0.44;
+  const sweepX = rect.x - sweepWidth * 0.3 + (rect.w + sweepWidth * 0.6) * sweepProgress;
+  const ringAlpha = 0.18 + charge * 0.28 + Math.max(0, burst) * 0.26 - settle * 0.08;
+  const hintText = morph.stageHint || '';
 
   ctx.save();
+  ctx.translate(jitter * 0.8, -charge * 2.8 + burst * 1.2);
+  drawOrb(ctx, heroCenterX, heroCenterY, auraRadius, goldAura);
+  drawOrb(ctx, heroCenterX, heroCenterY - rect.h * 0.04, auraRadius * 0.8, pinkAura);
+  drawOrb(ctx, heroCenterX, heroCenterY, Math.max(rect.w * 0.54, 72), whiteAura);
+
+  const ringCount = 2;
+  for (let i = 0; i < ringCount; i += 1) {
+    const progress = clamp(charge - i * 0.22 + Math.max(0, burst) * 0.18, 0, 1);
+    if (progress <= 0.02) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, ringAlpha - i * 0.1);
+    ctx.lineWidth = 2.4 - i * 0.5;
+    ctx.strokeStyle = i === 0 ? 'rgba(255,245,214,0.95)' : 'rgba(246,191,73,0.78)';
+    roundRect(
+      ctx,
+      rect.x - 8 - progress * 12,
+      rect.y - 8 - progress * 12,
+      rect.w + 16 + progress * 24,
+      rect.h + 16 + progress * 24,
+      radius + 10 + progress * 8
+    );
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.globalAlpha = 0.26 + charge * 0.18;
+  ctx.strokeStyle = 'rgba(255,241,199,0.9)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 4; i += 1) {
+    const rayOffset = (i - 1.5) * rect.w * 0.18;
+    const sway = Math.sin(now / 72 + i) * 4 * (1 - settle);
+    ctx.beginPath();
+    ctx.moveTo(heroCenterX + rayOffset, rect.y - 10 - charge * 10);
+    ctx.lineTo(heroCenterX + rayOffset + sway, rect.y - 28 - charge * 26 - i * 4);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(heroCenterX + rayOffset, rect.y + rect.h + 10 + charge * 8);
+    ctx.lineTo(heroCenterX + rayOffset - sway, rect.y + rect.h + 28 + charge * 24 + i * 4);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  drawSparkle(ctx, rect.x - 6, rect.y + rect.h * 0.24, 5 + charge * 2, '#fff7db', 0.3 + charge * 0.3);
+  drawSparkle(ctx, rect.x + rect.w + 8, rect.y + rect.h * 0.38, 6 + Math.max(0, burst) * 3, '#ffffff', 0.24 + Math.max(0, burst) * 0.34);
+  drawSparkle(ctx, rect.x + rect.w * 0.16, rect.y + rect.h + 10, 4 + charge * 2, '#ffd8ec', 0.2 + charge * 0.24);
+  drawSparkle(ctx, rect.x + rect.w * 0.84, rect.y - 8, 4 + charge * 2, '#fff1c2', 0.2 + charge * 0.22);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, jitter);
+  ctx.translate(heroCenterX, heroCenterY);
+  ctx.scale(pulseScale, pulseScale);
+  ctx.translate(-heroCenterX, -heroCenterY);
   roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
   ctx.clip();
   if (background) {
@@ -460,19 +529,31 @@ function drawGameAvatarMorph(ctx, runtime, state, rect, style, now, options) {
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
   }
 
-  if (flashAlpha > 0.01) {
+  if (coreFlash > 0.01) {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    ctx.fillStyle = `rgba(255,255,255,${flashAlpha.toFixed(3)})`;
+    const flash = ctx.createRadialGradient(
+      heroCenterX,
+      heroCenterY - rect.h * 0.04,
+      0,
+      heroCenterX,
+      heroCenterY - rect.h * 0.04,
+      Math.max(rect.w * 0.62, 84)
+    );
+    flash.addColorStop(0, `rgba(255,255,255,${Math.min(0.92, coreFlash + 0.2).toFixed(3)})`);
+    flash.addColorStop(0.38, `rgba(255,247,221,${(coreFlash * 0.88).toFixed(3)})`);
+    flash.addColorStop(0.7, `rgba(252,209,228,${(coreFlash * 0.52).toFixed(3)})`);
+    flash.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = flash;
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.restore();
   }
 
   const sweep = ctx.createLinearGradient(sweepX - sweepWidth / 2, rect.y, sweepX + sweepWidth / 2, rect.y);
   sweep.addColorStop(0, 'rgba(255,255,255,0)');
-  sweep.addColorStop(0.38, `rgba(255,255,255,${(0.16 + flashAlpha * 0.4).toFixed(3)})`);
-  sweep.addColorStop(0.5, `rgba(255,255,255,${(0.82 + flashAlpha * 0.35).toFixed(3)})`);
-  sweep.addColorStop(0.62, `rgba(255,245,250,${(0.26 + flashAlpha * 0.3).toFixed(3)})`);
+  sweep.addColorStop(0.34, `rgba(255,246,215,${(0.12 + coreFlash * 0.3).toFixed(3)})`);
+  sweep.addColorStop(0.5, `rgba(255,255,255,${(0.58 + coreFlash * 0.32).toFixed(3)})`);
+  sweep.addColorStop(0.66, `rgba(255,228,240,${(0.2 + coreFlash * 0.26).toFixed(3)})`);
   sweep.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
@@ -480,25 +561,75 @@ function drawGameAvatarMorph(ctx, runtime, state, rect, style, now, options) {
   ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
   ctx.restore();
 
-  if (flareAlpha > 0.01) {
+  if (charge > 0.02 || Math.max(0, burst) > 0.02) {
     drawOrb(
       ctx,
-      rect.x + rect.w * 0.5,
+      heroCenterX,
       rect.y + rect.h * 0.34,
-      Math.max(60, rect.w * 0.82),
-      `rgba(255,255,255,${flareAlpha.toFixed(3)})`
+      Math.max(60, rect.w * (0.72 + charge * 0.14)),
+      `rgba(255,255,255,${(0.06 + charge * 0.12 + Math.max(0, burst) * 0.16).toFixed(3)})`
     );
-    drawSparkle(ctx, rect.x + rect.w * 0.28, rect.y + rect.h * 0.22, 6, '#ffffff', flareAlpha * 1.2);
-    drawSparkle(ctx, rect.x + rect.w * 0.76, rect.y + rect.h * 0.36, 8, '#ffe3ef', flareAlpha);
-    drawSparkle(ctx, rect.x + rect.w * 0.64, rect.y + rect.h * 0.14, 5, '#ffffff', flareAlpha * 0.88);
+    drawSparkle(ctx, rect.x + rect.w * 0.18, rect.y + rect.h * 0.2, 6, '#ffffff', 0.14 + charge * 0.22);
+    drawSparkle(ctx, rect.x + rect.w * 0.82, rect.y + rect.h * 0.32, 8, '#ffe3ef', 0.14 + Math.max(0, burst) * 0.24);
+    drawSparkle(ctx, rect.x + rect.w * 0.66, rect.y + rect.h * 0.12, 5, '#fff7db', 0.12 + charge * 0.18);
+    drawSparkle(ctx, rect.x + rect.w * 0.32, rect.y + rect.h * 0.74, 4, '#ffffff', 0.1 + settle * 0.14);
+  }
+
+  if (stageLabelAlpha > 0.01 && morph.stageLabel) {
+    const chipW = Math.min(rect.w - 18, 112);
+    const chipH = 24;
+    const chipX = rect.x + (rect.w - chipW) / 2;
+    const chipY = rect.y + rect.h - 38;
+    ctx.save();
+    ctx.globalAlpha = stageLabelAlpha;
+    ctx.shadowColor = 'rgba(246,191,73,0.24)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 4;
+    const chipFill = ctx.createLinearGradient(chipX, chipY, chipX, chipY + chipH);
+    chipFill.addColorStop(0, 'rgba(255,252,240,0.92)');
+    chipFill.addColorStop(1, 'rgba(255,236,194,0.88)');
+    roundRect(ctx, chipX, chipY, chipW, chipH, 999);
+    ctx.fillStyle = chipFill;
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.76)';
+    ctx.stroke();
+    drawFittedText(ctx, morph.stageLabel, chipX + chipW / 2, chipY + chipH / 2 + 0.5, chipW - 16, 12, 'bold', '#9f5711', 'center');
+    ctx.restore();
+  }
+
+  if (stageHintAlpha > 0.01 && hintText) {
+    ctx.save();
+    ctx.globalAlpha = stageHintAlpha;
+    drawFittedText(
+      ctx,
+      hintText,
+      rect.x + rect.w / 2,
+      rect.y + rect.h - 12,
+      rect.w - 20,
+      10,
+      'bold',
+      'rgba(101,74,23,0.92)',
+      'center'
+    );
+    ctx.restore();
   }
   ctx.restore();
 
   if (frame) {
     ctx.save();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.shadowColor = `rgba(246,191,73,${(0.26 + charge * 0.3 + Math.max(0, burst) * 0.18).toFixed(3)})`;
+    ctx.shadowBlur = 18 + charge * 10;
+    ctx.shadowOffsetY = 0;
+    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
     roundRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+    ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = `rgba(246,191,73,${(0.18 + charge * 0.32 + Math.max(0, burst) * 0.24).toFixed(3)})`;
+    roundRect(ctx, rect.x + 3, rect.y + 3, rect.w - 6, rect.h - 6, Math.max(6, radius - 3));
     ctx.stroke();
     ctx.restore();
   }
@@ -876,6 +1007,8 @@ function drawWeightAdjustButton(ctx, rect, text, style) {
 function drawWeightGoalPage(ctx, state, runtime, layout, style, hits, interactive, buttonText, buttonKind) {
   const centerX = layout.width / 2;
   const contentW = Math.min(layout.width - 24, 336);
+  const activeField = interactive && runtime && runtime.weightKeyboard ? runtime.weightKeyboard.activeField : null;
+  const activeDraft = interactive && runtime && runtime.weightKeyboard ? runtime.weightKeyboard.draft : '';
   const sheet = {
     x: centerX - contentW / 2,
     y: layout.topPad - 10,
@@ -885,8 +1018,17 @@ function drawWeightGoalPage(ctx, state, runtime, layout, style, hits, interactiv
   const character = getCharacterById(state.selectedCharacterId);
   const image = runtime && runtime.images ? runtime.images[character.stageAssetPaths[2]] : null;
   const journeyProfile = getJourneyProfile(state.initialWeight, state.targetWeight);
+  const backRect = {
+    x: layout.sidePad,
+    y: layout.topPad + 2,
+    w: 40,
+    h: 40,
+  };
+  const backKind = interactive ? 'go_character_select' : 'go_home';
 
   drawOnboardingSheet(ctx, sheet, style);
+  drawTopNavIconButton(ctx, backRect, style);
+  addHit(hits, backKind, backKind, backRect);
   drawSparkle(ctx, sheet.x + 22, sheet.y + 118, 10, 'rgba(255,189,204,0.74)', 0.95);
   drawCapsHeader(ctx, 'S L I M   S W E E T   C R U S H', centerX, sheet.y + 44, '#ff7b98');
   drawGradientHeadline(ctx, '轻盈甜心', centerX, sheet.y + 88, contentW - 60, 30, '#ff4f93', '#f8ae3f');
@@ -908,7 +1050,7 @@ function drawWeightGoalPage(ctx, state, runtime, layout, style, hits, interactiv
     x: centerX - (contentW - 44) / 2,
     y: sheet.y + 186,
     w: contentW - 44,
-    h: Math.min(418, sheet.h - 220),
+    h: Math.min(454, sheet.h - 202),
   };
   drawCard(ctx, card, style, true);
 
@@ -942,9 +1084,27 @@ function drawWeightGoalPage(ctx, state, runtime, layout, style, hits, interactiv
   ctx.stroke();
   ctx.restore();
 
-  function drawWeightSection(label, value, centerY, accent, decKind, incKind) {
-    drawFittedText(ctx, label, centerX, centerY - 28, card.w - 60, 13, 'bold', style.palette.textSecondary, 'center');
-    drawFittedText(ctx, `${Math.round(value)}`, centerX, centerY + 6, card.w - 140, 48, 'normal', accent, 'center');
+  function drawWeightSection(label, value, centerY, accent, decKind, incKind, editKind, fieldKey) {
+    const isEditing = activeField === fieldKey;
+    const labelY = centerY - 42;
+    const valueRect = { x: card.x + 64, y: centerY - 20, w: card.w - 128, h: 60 };
+    const hintY = centerY + 56;
+    const displayValue = isEditing && activeDraft ? activeDraft : `${Math.round(value)}`;
+
+    drawFittedText(ctx, label, centerX, labelY, card.w - 60, 13, 'bold', style.palette.textSecondary, 'center');
+    ctx.save();
+    ctx.shadowColor = isEditing ? 'rgba(244,114,182,0.24)' : 'rgba(148,163,184,0.12)';
+    ctx.shadowBlur = isEditing ? 18 : 10;
+    ctx.shadowOffsetY = 5;
+    roundRect(ctx, valueRect.x, valueRect.y, valueRect.w, valueRect.h, 24);
+    ctx.fillStyle = isEditing ? 'rgba(255,247,250,0.98)' : 'rgba(255,255,255,0.92)';
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = isEditing ? 'rgba(244,114,182,0.72)' : 'rgba(241,245,249,0.98)';
+    ctx.stroke();
+    ctx.restore();
+    drawFittedText(ctx, displayValue, centerX, centerY + 8, valueRect.w - 36, 42, 'normal', accent, 'center');
     ctx.save();
     ctx.strokeStyle = accent === style.palette.accentStrong ? 'rgba(255,176,214,0.95)' : 'rgba(226,232,240,0.98)';
     ctx.lineWidth = 1.2;
@@ -955,18 +1115,30 @@ function drawWeightGoalPage(ctx, state, runtime, layout, style, hits, interactiv
     ctx.restore();
 
     if (interactive) {
-      const btnY = centerY - 14;
+      const btnY = valueRect.y + valueRect.h / 2 - 17;
       const decRect = { x: card.x + 18, y: btnY, w: 34, h: 34 };
       const incRect = { x: card.x + card.w - 52, y: btnY, w: 34, h: 34 };
       drawWeightAdjustButton(ctx, decRect, '−', style);
       drawWeightAdjustButton(ctx, incRect, '+', style);
+      drawFittedText(
+        ctx,
+        isEditing ? '输入中' : '点数字直接输入',
+        centerX,
+        hintY,
+        card.w - 88,
+        11,
+        'bold',
+        isEditing ? style.palette.accentStrong : style.palette.textMuted,
+        'center'
+      );
+      addHit(hits, editKind, editKind, valueRect);
       addHit(hits, decKind, decKind, decRect);
       addHit(hits, incKind, incKind, incRect);
     }
   }
 
-  drawWeightSection('当前体重 (斤)', state.initialWeight, card.y + 186, style.palette.textPrimary, 'dec_initial', 'inc_initial');
-  drawWeightSection('目标体重 (斤)', state.targetWeight, card.y + 290, style.palette.accentStrong, 'dec_target', 'inc_target');
+  drawWeightSection('当前体重 (斤)', state.initialWeight, card.y + 182, style.palette.textPrimary, 'dec_initial', 'inc_initial', 'edit_initial', 'initial');
+  drawWeightSection('目标体重 (斤)', state.targetWeight, card.y + 300, style.palette.accentStrong, 'dec_target', 'inc_target', 'edit_target', 'target');
 
   const actionRect = {
     x: card.x + 18,
@@ -2108,11 +2280,11 @@ function drawHomePage(ctx, state, runtime, layout, style, hits) {
   drawTopNavIconButton(ctx, backRect, style);
   addHit(hits, 'go_character_select', 'go_character_select', backRect);
 
-  const startBtn = getBottomActionRect(layout, compact ? 50 : 54, compact ? 8 : 12);
+  const startBtn = getBottomActionRect(layout, compact ? 50 : 54, compact ? 18 : 22);
   startBtn.x += compact ? 8 : 6;
   startBtn.w -= (compact ? 16 : 12);
 
-  const modeStartGap = compact ? 34 : 38;
+  const modeStartGap = compact ? 24 : 28;
   const modeCardH = compact ? 114 : 120;
   const modeCard = {
     x: layout.sidePad + (compact ? 6 : 4),
@@ -2121,7 +2293,7 @@ function drawHomePage(ctx, state, runtime, layout, style, hits) {
     h: modeCardH,
   };
 
-  const infoToModeGap = compact ? 14 : 16;
+  const infoToModeGap = compact ? 8 : 10;
   const infoCard = {
     x: layout.sidePad + 6,
     y: modeCard.y - infoToModeGap - (compact ? 88 : 94),
@@ -2507,6 +2679,10 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
   addHit(hits, 'reshuffle', 'reshuffle', reshuffleRect);
   addHit(hits, 'finish_game', 'finish_game', finishRect);
 
+  if (runtime.dockOverflowBurst) {
+    drawDockOverflowBurst(ctx, runtime, layout, g, style, now);
+  }
+
   if (state.slash.active) {
     ctx.save();
     ctx.fillStyle = 'rgba(27, 20, 40, 0.4)';
@@ -2532,7 +2708,53 @@ function drawGamePage(ctx, state, runtime, layout, style, hits) {
   }
 }
 
+function drawResultSuccessCelebration(ctx, layout, card, avatarRect, style, now) {
+  const pulse = (Math.sin(now / 240) + 1) * 0.5;
+  const drift = (Math.sin(now / 520) + 1) * 0.5;
+  const centerX = card.x + card.w / 2;
+  const haloY = avatarRect.y + avatarRect.h * 0.38;
+
+  ctx.save();
+  ctx.globalAlpha = 0.92;
+  drawOrb(ctx, centerX, haloY, 112 + pulse * 16, 'rgba(255,214,102,0.28)');
+  drawOrb(ctx, centerX - 42, haloY - 18, 88 + drift * 10, 'rgba(255,145,180,0.24)');
+  drawOrb(ctx, centerX + 44, haloY - 8, 84 + pulse * 12, 'rgba(115,214,184,0.22)');
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(246,191,73,0.38)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i += 1) {
+    const radius = 72 + i * 14 + pulse * 6;
+    ctx.beginPath();
+    ctx.arc(centerX, haloY, radius, -Math.PI * 0.12, Math.PI * 1.12);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  const sparkles = [
+    { x: card.x + 34, y: card.y + 30, size: 8, color: '#ffd76a', alpha: 0.82 },
+    { x: card.x + card.w - 36, y: card.y + 42, size: 9, color: '#ff9bc0', alpha: 0.84 },
+    { x: centerX - 86, y: avatarRect.y + 24, size: 10, color: '#ffffff', alpha: 0.92 },
+    { x: centerX + 92, y: avatarRect.y + 44, size: 8, color: '#ffe38c', alpha: 0.86 },
+    { x: centerX - 108, y: avatarRect.y + 118, size: 7, color: '#ffb4cf', alpha: 0.8 },
+    { x: centerX + 110, y: avatarRect.y + 132, size: 7, color: '#8fe2c7', alpha: 0.78 },
+  ];
+  sparkles.forEach((item, index) => {
+    const wobble = Math.sin(now / 280 + index * 0.8) * 5;
+    drawSparkle(ctx, item.x, item.y + wobble, item.size + pulse * 1.2, item.color, item.alpha);
+  });
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 248, 214, 0.96)';
+  roundRect(ctx, centerX - 78, card.y + 20, 156, 24, style.radius.pill);
+  ctx.fill();
+  drawFittedText(ctx, 'BODY GOAL CLEARED', centerX, card.y + 32, 144, 12, 'bold', '#b87a10', 'center');
+  ctx.restore();
+}
+
 function drawResultPage(ctx, state, runtime, layout, style, hits) {
+  const now = Date.now();
   const header = getHeaderMetrics(layout);
   drawTitle(ctx, layout, style, '结算页');
   const card = {
@@ -2542,6 +2764,14 @@ function drawResultPage(ctx, state, runtime, layout, style, hits) {
     h: layout.height - header.contentTop - layout.bottomPad - 122,
   };
   drawCard(ctx, card, style, true);
+  if (state.success) {
+    drawResultSuccessCelebration(ctx, layout, card, {
+      x: card.x + card.w / 2 - 68,
+      y: card.y + 16,
+      w: 136,
+      h: 214,
+    }, style, now);
+  }
 
   const avatarRect = {
     x: card.x + card.w / 2 - 68,
@@ -2551,11 +2781,18 @@ function drawResultPage(ctx, state, runtime, layout, style, hits) {
   };
   drawAvatar(ctx, runtime, state, avatarRect, { mode: 'contain', padding: 0, alignY: 0.52 });
   const titleColor = state.success ? style.palette.success : style.palette.danger;
-  drawFittedText(ctx, state.success ? '恭喜达标' : '本局结束', card.x + card.w / 2, avatarRect.y + avatarRect.h + 30, card.w - 24, 30, 'bold', titleColor, 'center');
-
-  drawFittedText(ctx, `原因：${state.resultReason || (state.success ? '目标完成' : '挑战失败')}`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 64, card.w - 24, 16, 'bold', style.palette.textSecondary, 'center');
-  drawFittedText(ctx, `最终体重 ${state.currentWeight.toFixed(1)} 斤`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 92, card.w - 24, 18, 'bold', style.palette.textPrimary, 'center');
-  drawFittedText(ctx, `总分 ${state.score} · 三消 ${state.matchCount} 次`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 118, card.w - 24, 16, '600', style.palette.textSecondary, 'center');
+  if (state.success) {
+    drawGradientHeadline(ctx, '减肥成功', card.x + card.w / 2, avatarRect.y + avatarRect.h + 28, card.w - 28, 42, '#ff7ea8', '#f6bf49');
+    drawFittedText(ctx, '体重进度 100% · 甜心蜕变完成', card.x + card.w / 2, avatarRect.y + avatarRect.h + 64, card.w - 28, 16, 'bold', titleColor, 'center');
+    drawFittedText(ctx, `最终体重 ${state.currentWeight.toFixed(1)} 斤`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 94, card.w - 28, 19, 'bold', style.palette.textPrimary, 'center');
+    drawFittedText(ctx, `总分 ${state.score} · 三消 ${state.matchCount} 次`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 122, card.w - 28, 16, '600', style.palette.textSecondary, 'center');
+    drawFittedText(ctx, state.resultReason || '减肥成功', card.x + card.w / 2, avatarRect.y + avatarRect.h + 148, card.w - 28, 18, 'bold', '#b87a10', 'center');
+  } else {
+    drawFittedText(ctx, '本局结束', card.x + card.w / 2, avatarRect.y + avatarRect.h + 30, card.w - 24, 30, 'bold', titleColor, 'center');
+    drawFittedText(ctx, `原因：${state.resultReason || '挑战失败'}`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 64, card.w - 24, 16, 'bold', style.palette.textSecondary, 'center');
+    drawFittedText(ctx, `最终体重 ${state.currentWeight.toFixed(1)} 斤`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 92, card.w - 24, 18, 'bold', style.palette.textPrimary, 'center');
+    drawFittedText(ctx, `总分 ${state.score} · 三消 ${state.matchCount} 次`, card.x + card.w / 2, avatarRect.y + avatarRect.h + 118, card.w - 24, 16, '600', style.palette.textSecondary, 'center');
+  }
 
   const replayRect = getBottomActionRect(layout, 48, 66);
   const homeRect = getBottomActionRect(layout, 48, 10);
@@ -2748,6 +2985,142 @@ function drawGameIntroOverlay(ctx, runtime, layout, style, now) {
   drawSparkle(ctx, layout.width * 0.78, titleY - 10 + sparkleDrift * 0.4, 13, '#ffd6e7', sparkleAlpha * 0.92);
   drawSparkle(ctx, layout.width * 0.68, titleY + 34 + sparkleDrift * 0.6, 8, '#ffffff', sparkleAlpha * 0.78);
   drawSparkle(ctx, layout.width * 0.35, titleY + 24 - sparkleDrift * 0.4, 7, '#ffe4ee', sparkleAlpha * 0.7);
+  ctx.restore();
+}
+
+function drawDockOverflowBurst(ctx, runtime, layout, g, style, now) {
+  if (!runtime.dockOverflowBurst) return;
+  const burst = runtime.dockOverflowBurst;
+  const elapsed = now - burst.start;
+  const duration = burst.durationMs || 980;
+  if (elapsed > duration) return;
+
+  const t = clamp(elapsed / duration, 0, 1);
+  const enter = easeOutCubic(clamp(t / 0.22, 0, 1));
+  const shatter = easeOutCubic(clamp((t - 0.18) / 0.34, 0, 1));
+  const fade = 1 - clamp((t - 0.72) / 0.28, 0, 1);
+  const pulse = Math.sin(Math.PI * clamp((t - 0.06) / 0.48, 0, 1));
+  const shake = Math.sin(now / 26) * (1 - clamp(t / 0.7, 0, 1)) * 5.2;
+  const shell = {
+    x: g.dockRect.x - 8 + shake,
+    y: g.dockRect.y - 8,
+    w: g.dockRect.w + 16,
+    h: g.dockRect.h + 16,
+  };
+  const centerX = shell.x + shell.w / 2;
+  const centerY = shell.y + shell.h / 2;
+
+  ctx.save();
+  ctx.fillStyle = `rgba(29,18,36,${(0.14 + enter * 0.24 * fade).toFixed(3)})`;
+  ctx.fillRect(0, 0, layout.width, layout.height);
+
+  const flashAlpha = Math.max(0, 0.42 * (1 - clamp(t / 0.22, 0, 1)));
+  if (flashAlpha > 0.01) {
+    ctx.fillStyle = `rgba(255,255,255,${flashAlpha.toFixed(3)})`;
+    ctx.fillRect(0, 0, layout.width, layout.height);
+  }
+
+  ctx.shadowColor = `rgba(244,63,94,${(0.2 + pulse * 0.16).toFixed(3)})`;
+  ctx.shadowBlur = 26;
+  ctx.shadowOffsetY = 8;
+  roundRect(ctx, shell.x, shell.y, shell.w, shell.h, 24);
+  ctx.fillStyle = `rgba(255,247,249,${(0.82 - t * 0.18).toFixed(3)})`;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineWidth = 2.2;
+  ctx.strokeStyle = `rgba(244,63,94,${(0.28 + pulse * 0.32).toFixed(3)})`;
+  ctx.stroke();
+
+  const crackAlpha = clamp((t - 0.16) / 0.2, 0, 1) * fade;
+  if (crackAlpha > 0.01) {
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,255,255,${(0.66 * crackAlpha).toFixed(3)})`;
+    ctx.lineWidth = 3.6;
+    ctx.beginPath();
+    ctx.moveTo(centerX - 8, shell.y + 10);
+    ctx.lineTo(centerX + 6, centerY - 8);
+    ctx.lineTo(centerX - 18, shell.y + shell.h - 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX + 4, shell.y + 16);
+    ctx.lineTo(centerX - 6, centerY + 2);
+    ctx.lineTo(centerX + 18, shell.y + shell.h - 14);
+    ctx.stroke();
+    ctx.strokeStyle = `rgba(244,63,94,${(0.84 * crackAlpha).toFixed(3)})`;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(centerX - 8, shell.y + 10);
+    ctx.lineTo(centerX + 6, centerY - 8);
+    ctx.lineTo(centerX - 18, shell.y + shell.h - 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX + 4, shell.y + 16);
+    ctx.lineTo(centerX - 6, centerY + 2);
+    ctx.lineTo(centerX + 18, shell.y + shell.h - 14);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const shardAlpha = clamp((t - 0.22) / 0.16, 0, 1) * fade;
+  if (shardAlpha > 0.01) {
+    const shards = [
+      { dx: -62, dy: -42, size: 14, driftX: -34, driftY: -38, rot: -0.42 },
+      { dx: -24, dy: -52, size: 11, driftX: -8, driftY: -48, rot: 0.28 },
+      { dx: 22, dy: -48, size: 12, driftX: 16, driftY: -46, rot: -0.22 },
+      { dx: 58, dy: -34, size: 15, driftX: 34, driftY: -34, rot: 0.36 },
+      { dx: -48, dy: 12, size: 10, driftX: -22, driftY: 10, rot: 0.44 },
+      { dx: 44, dy: 18, size: 10, driftX: 24, driftY: 10, rot: -0.34 },
+    ];
+    shards.forEach((shard) => {
+      const px = centerX + shard.dx + shard.driftX * shatter + shake * 0.4;
+      const py = centerY + shard.dy + shard.driftY * shatter;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(shard.rot + shatter * 1.2);
+      ctx.globalAlpha = shardAlpha;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      ctx.moveTo(0, -shard.size);
+      ctx.lineTo(shard.size * 0.78, shard.size * 0.58);
+      ctx.lineTo(-shard.size * 0.68, shard.size * 0.44);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(251,113,133,0.78)';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  const flare = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, shell.w * 0.6);
+  flare.addColorStop(0, `rgba(255,255,255,${(0.24 + pulse * 0.16).toFixed(3)})`);
+  flare.addColorStop(0.34, `rgba(251,113,133,${(0.18 + pulse * 0.08).toFixed(3)})`);
+  flare.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = flare;
+  ctx.fillRect(shell.x - 40, shell.y - 40, shell.w + 80, shell.h + 80);
+
+  drawFittedText(
+    ctx,
+    '甜心盘撑爆了！',
+    layout.width / 2,
+    g.dockRect.y - 24,
+    layout.width - layout.sidePad * 2,
+    24,
+    'bold',
+    style.palette.danger,
+    'center'
+  );
+  drawFittedText(
+    ctx,
+    '裂开后正在结算...',
+    layout.width / 2,
+    g.dockRect.y + g.dockRect.h + 34,
+    layout.width - layout.sidePad * 2,
+    13,
+    'bold',
+    '#ffffff',
+    'center'
+  );
   ctx.restore();
 }
 
