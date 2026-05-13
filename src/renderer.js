@@ -820,7 +820,7 @@ function drawTitle(ctx, layout, style, label) {
 
 const CHARACTER_POSTER_SWATCHES = {
   'peach-soda': { top: '#f8afcf', bottom: '#f59ac1', edge: '#ff8fb7' },
-  'cream-latte': { top: '#f6d6df', bottom: '#d9b6c3', edge: '#efd0da' },
+  'cream-latte': { top: '#f4eee7', bottom: '#c6b8ae', edge: '#eadfd5' },
   'mint-breeze': { top: '#c4efe7', bottom: '#8bd8ca', edge: '#91d6ca' },
   'berry-night': { top: '#d8d4de', bottom: '#9892a2', edge: '#c4bdcd' },
   'apricot-sun': { top: '#ffd8e5', bottom: '#f4bfd1', edge: '#ffd0dd' },
@@ -904,7 +904,7 @@ function drawGradientHeadline(ctx, text, x, y, maxWidth, startSize, leftColor, r
 function getCharacterCaption(character) {
   const captionMap = {
     'peach-soda': '适合喜欢元气感和舞台光泽的甜心形象。',
-    'cream-latte': '轻纱与颈圈的脆弱纯欲感，更偏柔软轻熟的氛围。',
+    'cream-latte': '黑白职业装和长发让整体更知性，像温柔又干练的老师气质。',
     'mint-breeze': '清爽薄荷感，像校园午后的轻盈微风。',
     'berry-night': '黑色兔警制服更利落，整体是偏冷感的轻熟甜酷气质。',
     'apricot-sun': '双马尾和公主裙的梦幻感更强，像童话里走出来的甜心公主。',
