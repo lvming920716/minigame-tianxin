@@ -65,6 +65,18 @@
             {
                 "type": "file",
                 "value": "package.json"
+            },
+            {
+                "type": "file",
+                "value": "project.private.config.json"
+            },
+            {
+                "type": "file",
+                "value": "assets/audio/README.md"
+            },
+            {
+                "type": "folder",
+                "value": "assets/characters/cream-latte"
             }
         ],
         "include": []

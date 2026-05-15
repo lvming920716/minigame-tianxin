@@ -823,10 +823,10 @@ const CHARACTER_POSTER_SWATCHES = {
   'cream-latte': { top: '#f4eee7', bottom: '#c6b8ae', edge: '#eadfd5' },
   'mint-breeze': { top: '#c4efe7', bottom: '#8bd8ca', edge: '#91d6ca' },
   'berry-night': { top: '#d8d4de', bottom: '#9892a2', edge: '#c4bdcd' },
-  'apricot-sun': { top: '#ffd8e5', bottom: '#f4bfd1', edge: '#ffd0dd' },
+  'apricot-sun': { top: '#ffe8ee', bottom: '#f7c8d4', edge: '#ffd8e2' },
   'ocean-star': { top: '#f6e1bc', bottom: '#dcc18f', edge: '#ecd4ab' },
   'rose-cocoa': { top: '#f2c4d7', bottom: '#d78aa8', edge: '#eab2ca' },
-  'lemon-fizz': { top: '#ffd9e5', bottom: '#f6b8cb', edge: '#ffc8d8' },
+  'lemon-fizz': { top: '#fbe8ef', bottom: '#efc5d2', edge: '#f7d8e3' },
   'moon-iris': { top: '#e5d9ff', bottom: '#c8b3ff', edge: '#d8c6ff' },
 };
 
@@ -907,10 +907,10 @@ function getCharacterCaption(character) {
     'cream-latte': '黑白职业装和长发让整体更知性，像温柔又干练的老师气质。',
     'mint-breeze': '清爽薄荷感，像校园午后的轻盈微风。',
     'berry-night': '黑色兔警制服更利落，整体是偏冷感的轻熟甜酷气质。',
-    'apricot-sun': '双马尾和公主裙的梦幻感更强，像童话里走出来的甜心公主。',
+    'apricot-sun': '粉白网球训练服更有元气感，整体是轻甜又清爽的运动少女氛围。',
     'ocean-star': '金发白领的利落感更突出，通勤气质里带一点轻熟精致。',
     'rose-cocoa': '玫瑰复古气质，带一点甜感和故事感。',
-    'lemon-fizz': '甜辣网球感更明显，开朗运动里带一点轻熟魅力。',
+    'lemon-fizz': '粉白礼服和长卷发更显优雅，整体是温柔克制的公主气质。',
     'moon-iris': '偏梦幻仙气的氛围，更柔和也更轻灵。',
   };
   return captionMap[character.id] || `${character.tagline} 的甜心形象。`;
